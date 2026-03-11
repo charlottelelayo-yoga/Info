@@ -1,0 +1,669 @@
+import { useState } from "react";
+
+const fontLink = document.createElement("link");
+fontLink.rel = "stylesheet";
+fontLink.href = "https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Serif+Display&display=swap";
+document.head.appendChild(fontLink);
+
+const ADMIN_PASSWORD = "yoga2025";
+const C = {
+  teal:"#5bb8b0",tealLight:"#e6f7f6",tealMid:"#a8deda",
+  bg:"#f4fafa",card:"rgba(255,255,255,0.92)",
+  text:"#1e3a38",muted:"#7aa09e",border:"rgba(91,184,176,0.18)",
+  red:"#e07070",redLight:"#fdeaea",
+  amber:"#d4924a",amberLight:"#fdf0e0",
+  green:"#4aaa7a",greenLight:"#e4f5ec",
+  purple:"#9b7fc2",purpleLight:"#f0eafa",
+};
+
+const fmt = d => new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+const todayStr = () => new Date().toISOString().split("T")[0];
+const inOneYear = () => { const d=new Date(); d.setFullYear(d.getFullYear()+1); return d.toISOString().split("T")[0]; };
+const isExp = d => new Date(d) < new Date();
+const daysLeft = d => Math.ceil((new Date(d)-new Date())/86400000);
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+const INIT_SCHED = [
+  {id:1,day:"Monday",time:"7:00am",title:"Forward Bending",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
+  {id:2,day:"Monday",time:"8:15am",title:"Spinal Movement",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
+  {id:3,day:"Monday",time:"7:30pm",title:"Yoga — Beginner",location:"Private Group Class",address:"Bangkapi Mansion, Sukhumvit Soi 12",type:"yoga",isPrivate:true,confirmed:false,contactWhatsapp:true,contactLine:false,inPackage:true,note:"Beginner level",description:""},
+  {id:4,day:"Wednesday",time:"7:00am",title:"Office Syndrome",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
+  {id:5,day:"Wednesday",time:"8:15am",title:"Hip & Shoulders",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
+  {id:6,day:"Wednesday",time:"7:00pm",title:"Vinyasa — Intermediate",location:"Private Group Class",address:"Siam Court, Sukhumvit Soi 4",type:"yoga",isPrivate:true,confirmed:false,contactWhatsapp:true,contactLine:false,inPackage:true,note:"Intermediate level",description:""},
+  {id:7,day:"Thursday",time:"7:00am",title:"Hatha",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
+  {id:8,day:"Thursday",time:"8:15am",title:"Full Body Opening",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
+  {id:9,day:"Thursday",time:"6:45pm",title:"Sound Healing",location:"Aadi Yoga Center",address:"Sukhumvit Soi 10",type:"sound",isPrivate:false,confirmed:false,contactWhatsapp:false,contactLine:false,inPackage:false,note:"",description:""},
+  {id:10,day:"Friday",time:"12:30pm",title:"Vinyasa — Intermediate",location:"Private Group Class",address:"Benjakitti Park",type:"yoga",isPrivate:true,confirmed:false,contactWhatsapp:true,contactLine:false,inPackage:true,note:"Intermediate level",description:""},
+];
+
+const INIT_EVENTS = [
+  {
+    id:1,date:"2026-03-15",time:"11:00am",title:"Serene Sunday",subtitle:"Breathwork · Meditation · Sound",
+    price:"550 THB",type:"sound",confirmed:false,contactWhatsapp:true,note:"1h30",
+    description:"Fully let go in this 90-minute immersive experience designed for deep rest and inner stillness. We open with gentle breathwork to calm the nervous system, move into a guided meditation to quiet the mind, then surrender to an extended sound bath — bowls, chimes and resonant tones guiding you into a profound state of relaxation. No experience needed. Just come as you are."
+  },
+];
+
+const INIT_BANNER = { active: false, message: "", dateFrom: "", dateTo: "", resumeDate: "" };
+
+const mkStudent = (id, name, pkgs) => ({ id, name, packages: pkgs });
+const mkPkg = (id, original, expiry, sessions) => ({ id, original, expiry, credits: original - sessions.length, sessions });
+const d = (day, mon, yr=2026) => `${yr}-${String(mon).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+const INIT_STUDENTS = [
+  mkStudent(1,"Sarah",     [mkPkg(1,10,"2027-01-07",[d(7,1),d(13,1),d(21,1),d(28,1),d(4,2),d(10,2),d(18,2)])]),
+  mkStudent(2,"Marine",    [mkPkg(2,10,"2027-01-07",[d(7,1),d(13,1),d(21,1),d(18,2)])]),
+  mkStudent(3,"Stéphane",  [mkPkg(3,5, "2027-01-12",[d(12,1),d(19,1),d(26,1),d(2,2)])]),
+  mkStudent(4,"Gaëtan",    [mkPkg(4,10,"2027-01-12",[d(12,1),d(19,1),d(26,1),d(2,2),d(9,3)])]),
+  mkStudent(5,"Maylis",    [mkPkg(5,10,"2027-01-13",[d(13,1),d(6,2),d(13,2)])]),
+  mkStudent(6,"Françoise", [mkPkg(6,10,"2027-01-13",[d(13,1),d(4,2),d(6,2),d(10,2),d(13,2),d(4,3)])]),
+  mkStudent(7,"Théo",      [mkPkg(7,5, "2027-01-19",[d(19,1),d(26,1),d(9,3)])]),
+  mkStudent(8,"Philippe",  [mkPkg(8,5, "2027-01-19",[d(19,1),d(2,2)])]),
+  mkStudent(9,"Joffrey",   [mkPkg(9,5, "2027-01-19",[d(19,1),d(26,1),d(16,2)])]),
+  mkStudent(10,"Lucie",    [mkPkg(10,10,"2027-01-21",[d(21,1),d(4,2),d(18,2),d(4,3)])]),
+  mkStudent(11,"Robin",    [mkPkg(11,5, "2027-01-28",[d(28,1),d(4,2)])]),
+  mkStudent(12,"Alexandre",[mkPkg(12,5, "2027-02-02",[d(2,2),d(16,2),d(9,3)])]),
+  mkStudent(13,"Tanguy",   [mkPkg(13,5, "2027-03-09",[d(9,3)])]),
+  mkStudent(14,"Léa",      [mkPkg(14,5, "2027-03-09",[d(9,3)])]),
+];
+
+const S = {
+  wrap:{fontFamily:"'DM Sans',sans-serif",minHeight:"100vh",background:C.bg,color:C.text},
+  hdr:{background:"rgba(255,255,255,0.95)",backdropFilter:"blur(12px)",borderBottom:`1px solid ${C.border}`,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:20},
+  logo:{fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",color:C.teal},
+  nav:{display:"flex",gap:3,background:"rgba(91,184,176,0.08)",borderRadius:12,padding:3},
+  navBtn:a=>({background:a?"#fff":"transparent",color:a?C.teal:C.muted,border:"none",borderRadius:10,padding:"6px 11px",fontSize:"0.82rem",fontWeight:a?600:400,cursor:"pointer",fontFamily:"inherit",boxShadow:a?"0 1px 4px rgba(91,184,176,0.15)":"none",whiteSpace:"nowrap"}),
+  page:{maxWidth:480,margin:"0 auto",padding:"16px 14px 48px"},
+  card:{background:C.card,borderRadius:16,padding:"16px 18px",marginBottom:12,border:`1px solid ${C.border}`,boxShadow:"0 2px 12px rgba(91,184,176,0.07)"},
+  lbl:{fontSize:"0.7rem",fontWeight:600,color:C.muted,letterSpacing:"0.08em",textTransform:"uppercase",display:"block",marginBottom:5},
+  inp:{width:"100%",border:`1.5px solid ${C.tealMid}`,borderRadius:10,padding:"10px 13px",fontSize:"0.95rem",fontFamily:"inherit",background:"#fff",boxSizing:"border-box",outline:"none",color:C.text,marginBottom:10},
+  btnMain:{width:"100%",background:C.teal,color:"#fff",border:"none",borderRadius:12,padding:"12px",fontSize:"0.95rem",fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginTop:4},
+  btnGhost:{width:"100%",background:"transparent",color:C.teal,border:`1.5px solid ${C.tealMid}`,borderRadius:12,padding:"11px",fontSize:"0.95rem",cursor:"pointer",fontFamily:"inherit",marginTop:8},
+  btnSm:(bg,col)=>({background:bg||C.teal,color:col||"#fff",border:"none",borderRadius:8,padding:"6px 12px",fontSize:"0.8rem",fontWeight:500,cursor:"pointer",fontFamily:"inherit"}),
+  err:{color:C.red,fontSize:"0.84rem",marginTop:2,marginBottom:6},
+  ok:{color:C.green,fontSize:"0.84rem",marginTop:4},
+  overlay:{position:"fixed",inset:0,background:"rgba(10,40,38,0.45)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:20},
+  modal:{background:"#fff",borderRadius:20,padding:26,width:"100%",maxWidth:360,boxShadow:"0 24px 60px rgba(30,80,78,0.18)",maxHeight:"90vh",overflowY:"auto"},
+};
+
+function Modal({title,onClose,children}){
+  return <div style={S.overlay}><div style={S.modal}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div style={{fontWeight:600,fontSize:"1rem"}}>{title}</div>
+      <button onClick={onClose} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"1.3rem",lineHeight:1}}>×</button>
+    </div>
+    {children}
+  </div></div>;
+}
+
+// ── ABSENCE BANNER (public) ───────────────────────────────────────────────────
+function AbsenceBanner({banner}){
+  if(!banner.active || !banner.message) return null;
+  return (
+    <div style={{background:"#fff8ed",borderBottom:`1px solid #f0d890`,padding:"10px 20px",textAlign:"center"}}>
+      <span style={{fontSize:"0.9rem",color:"#8a6a20"}}>
+        🌴 {banner.message}
+        {banner.dateFrom && banner.dateTo && (
+          <span style={{fontWeight:600}}> · {fmt(banner.dateFrom)} – {fmt(banner.dateTo)}</span>
+        )}
+        {banner.resumeDate && (
+          <span> · Back {fmt(banner.resumeDate)}</span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+// ── ABSENCE BANNER EDITOR (admin) ────────────────────────────────────────────
+function BannerEditor({banner,setBanner}){
+  const [editing,setEditing]=useState(false);
+  const [draft,setDraft]=useState(banner);
+
+  const save=()=>{setBanner(draft);setEditing(false);};
+  const toggle=()=>{const updated={...banner,active:!banner.active};setBanner(updated);setDraft(updated);};
+
+  return (
+    <div style={{...S.card,border:`1.5px solid ${banner.active?"#f0d890":C.border}`,background:banner.active?"#fff8ed":C.card,marginBottom:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontWeight:600,fontSize:"0.9rem",color:C.text}}>🌴 Absence banner</div>
+          <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{banner.active?"Visible to students":"Hidden"}</div>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={()=>setEditing(!editing)} style={S.btnSm("transparent",C.teal)}>Edit</button>
+          <button onClick={toggle} style={S.btnSm(banner.active?C.amber:C.green)}>
+            {banner.active?"Deactivate":"Activate"}
+          </button>
+        </div>
+      </div>
+      {banner.active && banner.message && (
+        <div style={{marginTop:10,padding:"8px 12px",background:"rgba(240,216,144,0.2)",borderRadius:8,fontSize:"0.82rem",color:"#8a6a20",fontStyle:"italic"}}>
+          "{banner.message}{banner.dateFrom&&banner.dateTo?` · ${fmt(banner.dateFrom)} – ${fmt(banner.dateTo)}`:""}
+          {banner.resumeDate?` · Back ${fmt(banner.resumeDate)}`:""}"
+        </div>
+      )}
+      {editing&&(
+        <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
+          <label style={S.lbl}>Message</label>
+          <input style={S.inp} value={draft.message} onChange={e=>setDraft({...draft,message:e.target.value})} placeholder="No classes from… / Taking a break…"/>
+          <div style={{display:"flex",gap:10}}>
+            <div style={{flex:1}}><label style={S.lbl}>From</label><input style={S.inp} type="date" value={draft.dateFrom} onChange={e=>setDraft({...draft,dateFrom:e.target.value})}/></div>
+            <div style={{flex:1}}><label style={S.lbl}>To</label><input style={S.inp} type="date" value={draft.dateTo} onChange={e=>setDraft({...draft,dateTo:e.target.value})}/></div>
+          </div>
+          <label style={S.lbl}>Back on</label>
+          <input style={S.inp} type="date" value={draft.resumeDate} onChange={e=>setDraft({...draft,resumeDate:e.target.value})}/>
+          <div style={{display:"flex",gap:8,marginTop:4}}>
+            <button style={{...S.btnMain,margin:0}} onClick={save}>Save</button>
+            <button style={{...S.btnGhost,margin:0}} onClick={()=>setEditing(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CLASS CARD ────────────────────────────────────────────────────────────────
+function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
+  const [open,setOpen]=useState(false);
+  return (
+    <div style={{background:cls.isPrivate?"#fff":C.tealLight,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${cls.isPrivate?C.border:"rgba(91,184,176,0.25)"}`,borderLeft:`3px solid ${cls.type==="sound"?C.purple:C.teal}`}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
+            <span style={{fontWeight:600,fontSize:"0.93rem"}}>{cls.time} · {cls.title}</span>
+            {cls.confirmed&&<span style={{background:C.greenLight,color:C.green,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10}}>✓ Confirmed</span>}
+          </div>
+          <div style={{fontSize:"0.82rem",color:C.muted}}>{cls.location}</div>
+          {cls.inPackage&&<span style={{background:C.tealLight,color:C.teal,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10,marginTop:4,display:"inline-block",border:`1px solid ${C.tealMid}`}}>Included in package</span>}
+        </div>
+        <button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px"}}>{open?"▲":"▼"}</button>
+      </div>
+      {open&&<div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+        {cls.address&&<div style={{fontSize:"0.82rem",color:C.muted,marginBottom:6}}>📍 {cls.address}</div>}
+        {cls.description&&<div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.6,marginBottom:8,fontStyle:"italic"}}>{cls.description}</div>}
+        {cls.note&&!cls.description&&<div style={{fontSize:"0.82rem",color:C.muted,marginBottom:8,fontStyle:"italic"}}>{cls.note}</div>}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {cls.contactWhatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>💬 WhatsApp to book</a>}
+          {cls.contactLine&&<a href="https://line.me/ti/p/~isorawellness" target="_blank" rel="noreferrer" style={{background:"#06C755",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>Contact on Line</a>}
+        </div>
+        {isAdmin&&<div style={{display:"flex",gap:8,marginTop:10}}>
+          <button style={S.btnSm(cls.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(cls.id)}>{cls.confirmed?"Unconfirm":"✓ Confirm"}</button>
+          <button style={S.btnSm("transparent",C.teal)} onClick={()=>onEdit(cls)}>Edit</button>
+        </div>}
+      </div>}
+    </div>
+  );
+}
+
+// ── EVENT CARD ────────────────────────────────────────────────────────────────
+function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
+  const [open,setOpen]=useState(false);
+  return (
+    <div style={{background:C.purpleLight,borderRadius:12,padding:"14px 16px",marginBottom:8,border:"1px solid rgba(155,127,194,0.2)",borderLeft:`3px solid ${C.purple}`}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexWrap:"wrap"}}>
+            <span style={{fontWeight:600,fontSize:"0.95rem"}}>{e.title}</span>
+            {e.confirmed&&<span style={{background:C.greenLight,color:C.green,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10}}>✓ Confirmed</span>}
+          </div>
+          <div style={{fontSize:"0.82rem",color:C.muted}}>{fmt(e.date)} · {e.time}</div>
+          {e.subtitle&&<div style={{fontSize:"0.78rem",color:C.purple,marginTop:3,letterSpacing:"0.02em"}}>{e.subtitle}</div>}
+          {e.price&&<div style={{fontSize:"0.85rem",fontWeight:600,color:C.text,marginTop:4}}>{e.price}</div>}
+        </div>
+        {(e.description||e.contactWhatsapp||isAdmin)&&(
+          <button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px",flexShrink:0}}>{open?"▲":"▼"}</button>
+        )}
+      </div>
+      {open&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(155,127,194,0.15)"}}>
+        {e.description&&(
+          <div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}>{e.description}</div>
+        )}
+        {e.contactWhatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"inline-block",background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none",marginBottom:isAdmin?10:0}}>💬 WhatsApp to book</a>}
+        {isAdmin&&<div style={{display:"flex",gap:8,marginTop:e.contactWhatsapp?8:0}}>
+          <button style={S.btnSm(e.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(e.id)}>{e.confirmed?"Unconfirm":"✓ Confirm"}</button>
+          <button style={S.btnSm("transparent",C.teal)} onClick={()=>onEdit(e)}>Edit</button>
+        </div>}
+      </div>}
+    </div>
+  );
+}
+
+// ── SCHEDULE VIEW ─────────────────────────────────────────────────────────────
+function ScheduleView({schedule,events,isAdmin,banner,onToggleConfirm,onEdit,onToggleEventConfirm,onEditEvent,onAddClass,onAddEvent}){
+  const [typeFilter,setTypeFilter]=useState("all");
+  const [showStudio,setShowStudio]=useState(true);
+  const filtered=schedule.filter(c=>(typeFilter==="all"||c.type===typeFilter)&&(showStudio||c.isPrivate));
+  const filteredEvents=typeFilter==="all"?events:events.filter(e=>e.type===typeFilter);
+  const upcoming=filteredEvents.filter(e=>new Date(e.date)>=new Date()).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const byDay=DAYS.map(day=>({day,priv:filtered.filter(c=>c.day===day&&c.isPrivate),studio:filtered.filter(c=>c.day===day&&!c.isPrivate)})).filter(d=>d.priv.length>0||d.studio.length>0);
+  return <div style={S.page}>
+    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14,alignItems:"center"}}>
+      {[{v:"all",l:"All"},{v:"yoga",l:"🧘 Yoga"},{v:"sound",l:"🔔 Sound"}].map(o=>(
+        <button key={o.v} onClick={()=>setTypeFilter(o.v)} style={{background:typeFilter===o.v?C.teal:"rgba(91,184,176,0.08)",color:typeFilter===o.v?"#fff":C.muted,border:`1.5px solid ${typeFilter===o.v?C.teal:C.border}`,borderRadius:20,padding:"5px 12px",fontSize:"0.8rem",fontWeight:typeFilter===o.v?600:400,cursor:"pointer",fontFamily:"inherit"}}>{o.l}</button>
+      ))}
+      <button onClick={()=>setShowStudio(!showStudio)} style={{background:!showStudio?C.teal:"rgba(91,184,176,0.08)",color:!showStudio?"#fff":C.muted,border:`1.5px solid ${!showStudio?C.teal:C.border}`,borderRadius:20,padding:"5px 12px",fontSize:"0.8rem",cursor:"pointer",fontFamily:"inherit",marginLeft:"auto",fontWeight:!showStudio?600:400}}>
+        {showStudio?"Hide studios":"Show studios"}
+      </button>
+    </div>
+    {isAdmin&&<div style={{display:"flex",gap:8,marginBottom:16}}>
+      <button style={{...S.btnSm(C.teal),flex:1,padding:"10px"}} onClick={onAddClass}>+ Add class</button>
+      <button style={{...S.btnSm(C.purple),flex:1,padding:"10px"}} onClick={onAddEvent}>+ Special event</button>
+    </div>}
+    {upcoming.length>0&&<div style={{marginBottom:20}}>
+      <div style={{fontSize:"0.7rem",fontWeight:600,color:C.muted,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:10}}>Special Events</div>
+      {upcoming.map(e=><EventCard key={e.id} e={e} isAdmin={isAdmin} onToggleConfirm={onToggleEventConfirm||(()=>{})} onEdit={onEditEvent||(()=>{})}/>)}
+    </div>}
+    {byDay.map(({day,priv,studio})=>(
+      <div key={day} style={{marginBottom:18}}>
+        <div style={{fontSize:"0.75rem",fontWeight:600,color:C.teal,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:8,paddingLeft:2}}>{day}</div>
+        {priv.map(c=><ClassCard key={c.id} cls={c} isAdmin={isAdmin} onToggleConfirm={onToggleConfirm||(()=>{})} onEdit={onEdit||(()=>{})}/>)}
+        {studio.length>0&&<>
+          {priv.length>0&&<div style={{fontSize:"0.7rem",color:C.muted,margin:"2px 0 6px 2px"}}>Also at studios</div>}
+          {studio.map(c=><ClassCard key={c.id} cls={c} isAdmin={isAdmin} onToggleConfirm={onToggleConfirm||(()=>{})} onEdit={onEdit||(()=>{})}/>)}
+        </>}
+      </div>
+    ))}
+    {byDay.length===0&&<div style={{textAlign:"center",color:C.muted,padding:"40px 0",fontStyle:"italic"}}>No classes to show</div>}
+  </div>;
+}
+
+// ── PRICING ───────────────────────────────────────────────────────────────────
+function PricingTab(){
+  const groupPlans=[
+    {id:"single",label:"Drop-in",classes:"1 class",price:"400",perClass:"400 / class",highlight:false,badge:null,desc:"Try a class or drop in when your schedule allows."},
+    {id:"five",label:"5-Class Pack",classes:"5 classes · 1 year validity",price:"1,850",perClass:"370 / class",highlight:false,badge:"Save 150 THB",desc:"A regular practice at better value."},
+    {id:"ten",label:"10-Class Pack",classes:"10 classes · 1 year validity",price:"3,500",perClass:"350 / class",highlight:true,badge:"Best Value",desc:"For committed practitioners. Maximum savings, maximum flexibility."},
+  ];
+  const privateSessions=[
+    {icon:"🧘",label:"Private Yoga",price:"1,200 THB"},
+    {icon:"🔔",label:"Private Sound Healing",price:"1,500 THB"},
+    {icon:"✋",label:"Private Reiki",price:"1,500 THB"},
+    {icon:"✨",label:"Reiki & Sound",sub:"90 min",price:"1,800 THB"},
+  ];
+  return <div style={S.page}>
+    <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.3rem",color:C.text,marginBottom:4}}>Group Classes</div>
+    <div style={{fontSize:"0.85rem",color:C.muted,marginBottom:18}}>Private group classes in Bangkok · all levels welcome</div>
+    {groupPlans.map(p=>(
+      <div key={p.id} style={{...S.card,border:p.highlight?`2px solid ${C.teal}`:`1px solid ${C.border}`,marginBottom:10,position:"relative"}}>
+        {p.badge&&<div style={{position:"absolute",top:-1,right:16,background:p.highlight?C.teal:C.tealMid,color:p.highlight?"#fff":C.text,fontSize:"0.68rem",fontWeight:700,padding:"3px 10px",borderRadius:"0 0 8px 8px",letterSpacing:"0.06em",textTransform:"uppercase"}}>{p.badge}</div>}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,marginTop:p.badge?8:0}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:"1rem",color:C.text}}>{p.label}</div>
+            <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{p.classes}</div>
+          </div>
+          <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+            <div style={{fontSize:"1.7rem",fontWeight:700,color:p.highlight?C.teal:C.text,lineHeight:1}}>{p.price}</div>
+            <div style={{fontSize:"0.72rem",color:C.muted,marginTop:2}}>THB · {p.perClass}</div>
+          </div>
+        </div>
+        <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5}}>{p.desc}</div>
+      </div>
+    ))}
+    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:C.teal,color:"#fff",borderRadius:12,padding:"12px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>
+      💬 Book a group class via WhatsApp
+    </a>
+    <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.3rem",color:C.text,marginBottom:4}}>Private Sessions</div>
+    <div style={{fontSize:"0.85rem",color:C.muted,marginBottom:14}}>One-on-one · tailored to your needs</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+      {privateSessions.map((s,i)=>(
+        <div key={i} style={{...S.card,marginBottom:0,textAlign:"center",padding:"18px 12px"}}>
+          <div style={{fontSize:"1.6rem",marginBottom:6}}>{s.icon}</div>
+          <div style={{fontWeight:600,fontSize:"0.88rem",color:C.text,marginBottom:2}}>{s.label}</div>
+          {s.sub&&<div style={{fontSize:"0.72rem",color:C.muted,marginBottom:4}}>{s.sub}</div>}
+          <div style={{fontSize:"1.05rem",fontWeight:700,color:C.teal,marginTop:4}}>{s.price}</div>
+        </div>
+      ))}
+    </div>
+    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:"transparent",color:C.teal,border:`1.5px solid ${C.teal}`,borderRadius:12,padding:"11px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>
+      💬 Book a private session via WhatsApp
+    </a>
+    <div style={{...S.card,borderLeft:`3px solid ${C.purple}`,marginBottom:10}}>
+      <div style={{fontWeight:600,fontSize:"0.95rem",marginBottom:4}}>🎵 Special Events</div>
+      <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5}}>Sound healings, workshops & pop-up classes. Pricing varies — check the Schedule tab for upcoming sessions.</div>
+    </div>
+    <div style={{fontSize:"0.7rem",fontWeight:600,color:C.muted,textTransform:"uppercase",letterSpacing:"0.09em",margin:"20px 0 10px"}}>Also at Studios</div>
+    <div style={{display:"flex",gap:10}}>
+      <a href="https://aadiyogacenter.com/packageplans" target="_blank" rel="noreferrer" style={{flex:1,...S.card,textDecoration:"none",textAlign:"center",marginBottom:0,borderTop:`3px solid ${C.teal}`,padding:"16px 12px"}}>
+        <div style={{fontSize:"0.95rem",fontWeight:600,color:C.text,marginBottom:4}}>Aadi Yoga</div>
+        <div style={{fontSize:"0.75rem",color:C.muted,marginBottom:8}}>Sukhumvit Soi 10</div>
+        <div style={{fontSize:"0.78rem",color:C.teal,fontWeight:600}}>View packages →</div>
+      </a>
+      <a href="https://www.instagram.com/p/DVbhgfYkqRQ/" target="_blank" rel="noreferrer" style={{flex:1,...S.card,textDecoration:"none",textAlign:"center",marginBottom:0,borderTop:`3px solid ${C.teal}`,padding:"16px 12px"}}>
+        <div style={{fontSize:"0.95rem",fontWeight:600,color:C.text,marginBottom:4}}>Isora Wellness</div>
+        <div style={{fontSize:"0.75rem",color:C.muted,marginBottom:8}}>Sathorn Soi 12</div>
+        <div style={{fontSize:"0.78rem",color:C.teal,fontWeight:600}}>View packages →</div>
+      </a>
+    </div>
+  </div>;
+}
+
+// ── MY CLASSES ────────────────────────────────────────────────────────────────
+function MyClassesTab({students}){
+  const [input,setInput]=useState("");
+  const [found,setFound]=useState(null);
+  const [err,setErr]=useState("");
+  const search=()=>{const f=students.find(s=>s.name.toLowerCase()===input.trim().toLowerCase());f?(setFound(f),setErr("")):(setFound(null),setErr("Name not found — check the spelling!"));};
+  const getActive=st=>st.packages.filter(p=>!isExp(p.expiry)&&p.credits>0);
+  const tot=st=>getActive(st).reduce((a,p)=>a+p.credits,0);
+  return <div style={S.page}>
+    <div style={S.card}>
+      <label style={S.lbl}>Your first name</label>
+      <input style={S.inp} value={input} onChange={e=>{setInput(e.target.value);setErr("");setFound(null);}} placeholder="e.g. Juliette" onKeyDown={e=>e.key==="Enter"&&search()}/>
+      {err&&<div style={S.err}>{err}</div>}
+      <button style={S.btnMain} onClick={search}>Check my classes →</button>
+    </div>
+    {found&&(()=>{
+      const act=getActive(found); const t=tot(found);
+      return <div style={S.card}>
+        <div style={{fontWeight:600,fontSize:"1.05rem",marginBottom:12}}>{found.name}</div>
+        {act.length===0
+          ?<div style={{color:C.red,fontStyle:"italic",fontSize:"0.9rem"}}>No active classes — contact your teacher to renew!</div>
+          :<>
+            <div style={{display:"flex",alignItems:"flex-end",gap:8,marginBottom:14}}>
+              <div style={{fontSize:"2.6rem",fontWeight:700,color:t>3?C.teal:t>0?C.amber:C.red,lineHeight:1}}>{t}</div>
+              <div style={{color:C.muted,fontSize:"0.9rem",paddingBottom:6}}>classes remaining</div>
+            </div>
+            {act.sort((a,b)=>new Date(a.expiry)-new Date(b.expiry)).map(p=>(
+              <div key={p.id} style={{background:C.tealLight,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{fontWeight:600,fontSize:"0.88rem"}}>{p.credits} / {p.original} classes</span>
+                  <span style={{background:daysLeft(p.expiry)<30?C.amberLight:C.greenLight,color:daysLeft(p.expiry)<30?C.amber:C.green,fontSize:"0.7rem",fontWeight:700,padding:"2px 9px",borderRadius:10}}>
+                    {daysLeft(p.expiry)<30?`${daysLeft(p.expiry)}d left`:`Expires ${fmt(p.expiry)}`}
+                  </span>
+                </div>
+                <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions.length?8:0}}>
+                  <div style={{width:`${((p.original-p.credits)/p.original)*100}%`,height:4,background:C.teal,borderRadius:4}}/>
+                </div>
+                {p.sessions.length>0&&<details>
+                  <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer"}}>Redeemed ({p.sessions.length})</summary>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+                    {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
+                      <span key={i} style={{background:"rgba(91,184,176,0.12)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s)}</span>
+                    ))}
+                  </div>
+                </details>}
+              </div>
+            ))}
+          </>}
+      </div>;
+    })()}
+  </div>;
+}
+
+// ── STUDENTS PANEL ────────────────────────────────────────────────────────────
+function StudentsPanel({students,setStudents}){
+  const [modal,setModal]=useState(null);
+  const [search,setSearch]=useState("");
+  const [newName,setNewName]=useState(""); const [newCr,setNewCr]=useState(10); const [newExp,setNewExp]=useState(inOneYear()); const [addMsg,setAddMsg]=useState("");
+  const [showArch,setShowArch]=useState({});
+  const upd=fn=>setStudents(prev=>fn(prev));
+  const getActive=st=>st.packages.filter(p=>!isExp(p.expiry)&&p.credits>0);
+  const getArchived=st=>st.packages.filter(p=>isExp(p.expiry)||p.credits===0);
+  const tot=st=>getActive(st).reduce((a,p)=>a+p.credits,0);
+  const filtered=students.filter(s=>s.name.toLowerCase().includes(search.toLowerCase()));
+  const addStudent=()=>{
+    if(!newName.trim())return;
+    if(students.find(s=>s.name.toLowerCase()===newName.trim().toLowerCase())){setAddMsg("Already exists!");return;}
+    upd(l=>[...l,{id:Date.now(),name:newName.trim(),packages:[{id:Date.now(),credits:parseInt(newCr),original:parseInt(newCr),expiry:newExp,sessions:[]}]}]);
+    setNewName("");setNewCr(10);setNewExp(inOneYear());setAddMsg("✓ Added!");setTimeout(()=>setAddMsg(""),2500);
+  };
+  const deduct=(sid,date)=>upd(l=>l.map(st=>{
+    if(st.id!==sid)return st;
+    const active=[...st.packages].filter(p=>!isExp(p.expiry)&&p.credits>0).sort((x,y)=>new Date(x.expiry)-new Date(y.expiry));
+    if(!active.length)return st;
+    const oldest=active[0];
+    return {...st,packages:st.packages.map(p=>p.id===oldest.id?{...p,credits:p.credits-1,sessions:[...p.sessions,date]}:p)};
+  }));
+  const addPkg=(sid,cr,exp)=>upd(l=>l.map(st=>st.id!==sid?st:{...st,packages:[...st.packages,{id:Date.now(),credits:parseInt(cr),original:parseInt(cr),expiry:exp,sessions:[]}]}));
+  const delStudent=sid=>upd(l=>l.filter(s=>s.id!==sid));
+
+  return <div style={S.page}>
+    <div style={{position:"relative",marginBottom:14}}>
+      <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:C.muted}}>🔍</span>
+      <input style={{...S.inp,paddingLeft:36,marginBottom:0}} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search students…"/>
+    </div>
+    <div style={S.card}>
+      <div style={{fontWeight:600,fontSize:"0.95rem",marginBottom:14}}>+ New student</div>
+      <label style={S.lbl}>Name</label><input style={S.inp} value={newName} onChange={e=>setNewName(e.target.value)} placeholder="e.g. Sophie"/>
+      <div style={{display:"flex",gap:10}}>
+        <div style={{flex:1}}><label style={S.lbl}>Classes</label><input style={S.inp} type="number" min={1} value={newCr} onChange={e=>setNewCr(e.target.value)}/></div>
+        <div style={{flex:1.6}}><label style={S.lbl}>Expiry</label><input style={S.inp} type="date" value={newExp} onChange={e=>setNewExp(e.target.value)}/></div>
+      </div>
+      <button style={S.btnMain} onClick={addStudent}>Add student</button>
+      {addMsg&&<div style={addMsg.includes("✓")?S.ok:S.err}>{addMsg}</div>}
+    </div>
+    <div style={{fontSize:"0.72rem",color:C.muted,textTransform:"uppercase",letterSpacing:"0.09em",marginBottom:10,paddingLeft:2}}>{filtered.length} student{filtered.length!==1?"s":""}</div>
+    {filtered.map(st=>{
+      const act=getActive(st); const arch=getArchived(st); const t=tot(st);
+      return <div key={st.id} style={{...S.card,borderLeft:`3px solid ${t===0?C.red:t<=2?C.amber:C.teal}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div style={{fontWeight:600,fontSize:"1.05rem"}}>{st.name}</div>
+          <div style={{fontSize:"2.2rem",fontWeight:700,lineHeight:1,color:t>3?C.teal:t>0?C.amber:C.red}}>{t}<span style={{fontSize:"0.78rem",color:C.muted,fontWeight:400}}> left</span></div>
+        </div>
+        {act.length===0&&<div style={{fontSize:"0.85rem",color:C.muted,fontStyle:"italic",marginBottom:8}}>No active package</div>}
+        {act.sort((a,b)=>new Date(a.expiry)-new Date(b.expiry)).map(p=>(
+          <div key={p.id} style={{background:C.tealLight,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontWeight:600,fontSize:"0.88rem"}}>{p.credits} / {p.original} classes</span>
+              <span style={{background:daysLeft(p.expiry)<30?C.amberLight:C.greenLight,color:daysLeft(p.expiry)<30?C.amber:C.green,fontSize:"0.7rem",fontWeight:700,padding:"2px 9px",borderRadius:10}}>
+                {isExp(p.expiry)?"Expired":daysLeft(p.expiry)<30?`${daysLeft(p.expiry)}d left`:`Exp. ${fmt(p.expiry)}`}
+              </span>
+            </div>
+            <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions.length?8:0}}>
+              <div style={{width:`${((p.original-p.credits)/p.original)*100}%`,height:4,background:C.teal,borderRadius:4}}/>
+            </div>
+            {p.sessions.length>0&&<details>
+              <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer",userSelect:"none"}}>Redeemed ({p.sessions.length})</summary>
+              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+                {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
+                  <span key={i} style={{background:"rgba(91,184,176,0.2)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s)}</span>
+                ))}
+              </div>
+            </details>}
+          </div>
+        ))}
+        <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:6}}>
+          <button style={S.btnSm(C.teal)} onClick={()=>setModal({type:"deduct",sid:st.id,name:st.name,date:todayStr()})} disabled={t===0}>✓ Class done</button>
+          <button style={S.btnSm("#4aaa9a")} onClick={()=>setModal({type:"addPkg",sid:st.id,name:st.name,credits:10,expiry:inOneYear()})}>+ Package</button>
+          <button style={{...S.btnSm("transparent",C.red),border:"1px solid #f0c0c0"}} onClick={()=>setModal({type:"del",sid:st.id,name:st.name})}>Delete</button>
+        </div>
+        {arch.length>0&&<div style={{marginTop:8}}>
+          <button onClick={()=>setShowArch(p=>({...p,[st.id]:!p[st.id]}))} style={{background:"none",border:"none",color:C.muted,fontSize:"0.75rem",cursor:"pointer",padding:0,fontFamily:"inherit"}}>
+            {showArch[st.id]?"▾":"▸"} {arch.length} archived package{arch.length>1?"s":""}
+          </button>
+          {showArch[st.id]&&arch.map(p=>(
+            <div key={p.id} style={{background:"#f5f5f5",borderRadius:8,padding:"10px 12px",marginTop:6,opacity:0.75}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                <span style={{fontSize:"0.82rem",color:C.muted,fontWeight:600}}>{p.original} classes · {isExp(p.expiry)?"expired":"used up"} {fmt(p.expiry)}</span>
+                <span style={{fontSize:"0.75rem",color:C.muted}}>{p.original-p.credits} redeemed</span>
+              </div>
+              {p.sessions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
+                {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
+                  <span key={i} style={{background:"#e8e8e8",borderRadius:5,padding:"1px 7px",fontSize:"0.7rem",color:"#999"}}>{fmt(s)}</span>
+                ))}
+              </div>}
+            </div>
+          ))}
+        </div>}
+      </div>;
+    })}
+    {modal?.type==="deduct"&&<Modal title="✓ Mark class as done" onClose={()=>setModal(null)}>
+      <div style={{color:C.muted,fontSize:"0.9rem",marginBottom:14}}>Student: <strong>{modal.name}</strong></div>
+      <label style={S.lbl}>Class date</label>
+      <input style={S.inp} type="date" value={modal.date} onChange={e=>setModal({...modal,date:e.target.value})}/>
+      <div style={{display:"flex",gap:10,marginTop:8}}>
+        <button style={{...S.btnMain,margin:0}} onClick={()=>{deduct(modal.sid,modal.date);setModal(null);}}>Confirm</button>
+        <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
+      </div>
+    </Modal>}
+    {modal?.type==="addPkg"&&<Modal title="+ New package" onClose={()=>setModal(null)}>
+      <div style={{color:C.muted,fontSize:"0.9rem",marginBottom:14}}>Student: <strong>{modal.name}</strong></div>
+      <label style={S.lbl}>Classes</label>
+      <select style={S.inp} value={modal.credits} onChange={e=>setModal({...modal,credits:e.target.value})}>
+        <option value={1}>1 class — drop-in</option>
+        <option value={5}>5 classes</option>
+        <option value={10}>10 classes</option>
+      </select>
+      <label style={S.lbl}>Expiry date</label>
+      <input style={S.inp} type="date" value={modal.expiry} onChange={e=>setModal({...modal,expiry:e.target.value})}/>
+      <div style={{display:"flex",gap:10,marginTop:8}}>
+        <button style={{...S.btnMain,margin:0}} onClick={()=>{addPkg(modal.sid,modal.credits,modal.expiry);setModal(null);}}>Add package</button>
+        <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
+      </div>
+    </Modal>}
+    {modal?.type==="del"&&<Modal title="Delete student" onClose={()=>setModal(null)}>
+      <div style={{fontSize:"0.9rem",marginBottom:18}}>Delete <strong>{modal.name}</strong> and all their packages?</div>
+      <div style={{display:"flex",gap:10}}>
+        <button style={{...S.btnMain,margin:0,background:C.red}} onClick={()=>{delStudent(modal.sid);setModal(null);}}>Delete</button>
+        <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+// ── EDIT MODALS ───────────────────────────────────────────────────────────────
+function ClassEditModal({cls,onSave,onDelete,onClose}){
+  const [v,setV]=useState(cls);
+  return <Modal title={v.id?"Edit class":"New class"} onClose={onClose}>
+    {[["title","Title"],["time","Time (e.g. 7:00am)"],["location","Location"],["address","Address"],["note","Note"]].map(([k,l])=>(
+      <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} value={v[k]||""} onChange={e=>setV({...v,[k]:e.target.value})}/></div>
+    ))}
+    <label style={S.lbl}>Description (optional)</label>
+    <textarea style={{...S.inp,minHeight:80,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="Class theme, details, teacher absence notice…"/>
+    <label style={S.lbl}>Day</label>
+    <select style={S.inp} value={v.day} onChange={e=>setV({...v,day:e.target.value})}>{DAYS.map(d=><option key={d}>{d}</option>)}</select>
+    <label style={S.lbl}>Type</label>
+    <select style={S.inp} value={v.type} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
+    <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
+      {[["isPrivate","Private"],["inPackage","In package"],["contactWhatsapp","WhatsApp"],["contactLine","Line"]].map(([k,l])=>(
+        <label key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",cursor:"pointer"}}>
+          <input type="checkbox" checked={!!v[k]} onChange={e=>setV({...v,[k]:e.target.checked})}/>{l}
+        </label>
+      ))}
+    </div>
+    <div style={{display:"flex",gap:8}}>
+      <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
+      {v.id&&<button style={{...S.btnSm(C.red),padding:"12px"}} onClick={()=>onDelete(v.id)}>Delete</button>}
+      <button style={{...S.btnGhost,margin:0}} onClick={onClose}>Cancel</button>
+    </div>
+  </Modal>;
+}
+
+function EventEditModal({evt,onSave,onDelete,onClose}){
+  const [v,setV]=useState(evt);
+  return <Modal title={v.id?"Edit event":"New event"} onClose={onClose}>
+    {[["title","Title"],["subtitle","Tags (e.g. Breathwork · Meditation · Sound)"],["time","Time"],["price","Price"]].map(([k,l])=>(
+      <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} value={v[k]||""} onChange={e=>setV({...v,[k]:e.target.value})}/></div>
+    ))}
+    <label style={S.lbl}>Description (optional)</label>
+    <textarea style={{...S.inp,minHeight:90,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="What to expect, mood, experience…"/>
+    <label style={S.lbl}>Date</label><input style={S.inp} type="date" value={v.date} onChange={e=>setV({...v,date:e.target.value})}/>
+    <label style={S.lbl}>Type</label>
+    <select style={S.inp} value={v.type} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
+    <label style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",cursor:"pointer",marginBottom:14}}>
+      <input type="checkbox" checked={!!v.contactWhatsapp} onChange={e=>setV({...v,contactWhatsapp:e.target.checked})}/>WhatsApp button
+    </label>
+    <div style={{display:"flex",gap:8}}>
+      <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
+      {v.id&&<button style={{...S.btnSm(C.red),padding:"12px"}} onClick={()=>onDelete(v.id)}>Delete</button>}
+      <button style={{...S.btnGhost,margin:0}} onClick={onClose}>Cancel</button>
+    </div>
+  </Modal>;
+}
+
+// ── SCREENS ───────────────────────────────────────────────────────────────────
+function StudentScreen({schedule,events,students,banner,onAdmin}){
+  const [tab,setTab]=useState("schedule");
+  return <div style={S.wrap}>
+    <div style={S.hdr}>
+      <div style={S.logo}>✦ Yoga Classes</div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={S.nav}>
+          <button style={S.navBtn(tab==="schedule")} onClick={()=>setTab("schedule")}>Schedule</button>
+          <button style={S.navBtn(tab==="my")} onClick={()=>setTab("my")}>My Classes</button>
+          <button style={S.navBtn(tab==="pricing")} onClick={()=>setTab("pricing")}>Pricing</button>
+        </div>
+        <button onClick={onAdmin} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"4px 6px"}}>⚙</button>
+      </div>
+    </div>
+    <AbsenceBanner banner={banner}/>
+    {tab==="schedule"&&<ScheduleView schedule={schedule} events={events} isAdmin={false} banner={banner}/>}
+    {tab==="my"&&<MyClassesTab students={students}/>}
+    {tab==="pricing"&&<PricingTab/>}
+  </div>;
+}
+
+function LoginScreen({onSuccess,onBack}){
+  const [pw,setPw]=useState(""); const [err,setErr]=useState("");
+  const login=()=>{if(pw===ADMIN_PASSWORD)onSuccess();else setErr("Incorrect password");};
+  return <div style={S.wrap}>
+    <div style={S.hdr}>
+      <div style={S.logo}>✦ Teacher</div>
+      <button onClick={onBack} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontFamily:"inherit"}}>← Back</button>
+    </div>
+    <div style={S.page}><div style={S.card}>
+      <div style={{fontWeight:600,fontSize:"1rem",marginBottom:16}}>🔐 Teacher login</div>
+      <label style={S.lbl}>Password</label>
+      <input style={S.inp} type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••••" onKeyDown={e=>e.key==="Enter"&&login()}/>
+      {err&&<div style={S.err}>{err}</div>}
+      <button style={S.btnMain} onClick={login}>Enter</button>
+    </div></div>
+  </div>;
+}
+
+function AdminScreen({schedule,setSchedule,events,setEvents,students,setStudents,banner,setBanner,onLogout}){
+  const [tab,setTab]=useState("schedule");
+  const [editCls,setEditCls]=useState(null);
+  const [editEvt,setEditEvt]=useState(null);
+  const toggleConfirm=id=>setSchedule(s=>s.map(c=>c.id===id?{...c,confirmed:!c.confirmed}:c));
+  const toggleEventConfirm=id=>setEvents(e=>e.map(ev=>ev.id===id?{...ev,confirmed:!ev.confirmed}:ev));
+  const saveClass=cls=>{
+    if(cls.id&&schedule.find(c=>c.id===cls.id)) setSchedule(s=>s.map(c=>c.id===cls.id?cls:c));
+    else setSchedule(s=>[...s,{...cls,id:Date.now(),confirmed:false}]);
+    setEditCls(null);
+  };
+  const delClass=id=>{setSchedule(s=>s.filter(c=>c.id!==id));setEditCls(null);};
+  const saveEvent=evt=>{
+    if(evt.id&&events.find(e=>e.id===evt.id)) setEvents(e=>e.map(ev=>ev.id===evt.id?evt:ev));
+    else setEvents(e=>[...e,{...evt,id:Date.now(),confirmed:false}]);
+    setEditEvt(null);
+  };
+  const delEvent=id=>{setEvents(e=>e.filter(ev=>ev.id!==id));setEditEvt(null);};
+  return <div style={S.wrap}>
+    <div style={S.hdr}>
+      <div style={S.logo}>✦ Admin</div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={S.nav}>
+          <button style={S.navBtn(tab==="schedule")} onClick={()=>setTab("schedule")}>Schedule</button>
+          <button style={S.navBtn(tab==="students")} onClick={()=>setTab("students")}>Students</button>
+        </div>
+        <button onClick={onLogout} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.78rem",fontFamily:"inherit"}}>Log out</button>
+      </div>
+    </div>
+    {tab==="schedule"&&<div style={S.page}>
+      <BannerEditor banner={banner} setBanner={setBanner}/>
+      <ScheduleView
+        schedule={schedule} events={events} isAdmin={true}
+        onToggleConfirm={toggleConfirm} onEdit={setEditCls}
+        onToggleEventConfirm={toggleEventConfirm} onEditEvent={setEditEvt}
+        onAddClass={()=>setEditCls({day:"Monday",time:"",title:"",location:"",address:"",type:"yoga",isPrivate:true,inPackage:false,confirmed:false,contactWhatsapp:true,contactLine:false,note:"",description:""})}
+        onAddEvent={()=>setEditEvt({date:todayStr(),time:"",title:"",subtitle:"",price:"",type:"yoga",confirmed:false,contactWhatsapp:true,note:"",description:""})}
+      />
+    </div>}
+    {tab==="students"&&<StudentsPanel students={students} setStudents={setStudents}/>}
+    {editCls&&<ClassEditModal cls={editCls} onSave={saveClass} onDelete={delClass} onClose={()=>setEditCls(null)}/>}
+    {editEvt&&<EventEditModal evt={editEvt} onSave={saveEvent} onDelete={delEvent} onClose={()=>setEditEvt(null)}/>}
+  </div>;
+}
+
+// ── ROOT ──────────────────────────────────────────────────────────────────────
+export default function Root(){
+  const [screen,setScreen]=useState("student");
+  const [schedule,setSchedule]=useState(INIT_SCHED);
+  const [events,setEvents]=useState(INIT_EVENTS);
+  const [students,setStudents]=useState(INIT_STUDENTS);
+  const [banner,setBanner]=useState(INIT_BANNER);
+  if(screen==="student") return <StudentScreen schedule={schedule} events={events} students={students} banner={banner} onAdmin={()=>setScreen("login")}/>;
+  if(screen==="login") return <LoginScreen onSuccess={()=>setScreen("admin")} onBack={()=>setScreen("student")}/>;
+  return <AdminScreen schedule={schedule} setSchedule={setSchedule} events={events} setEvents={setEvents} students={students} setStudents={setStudents} banner={banner} setBanner={setBanner} onLogout={()=>setScreen("student")}/>;
+}
