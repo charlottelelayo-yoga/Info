@@ -373,6 +373,12 @@ function StudentsPanel({students,onRefresh}){
     onRefresh();
   };
 
+  const undoSession=async(session,pkg)=>{
+    await supabase.from('sessions').delete().eq('id',session.id);
+    await supabase.from('packages').update({credits:pkg.credits+1}).eq('id',pkg.id);
+    onRefresh();
+  };
+
   const addPkg=async(sid,cr,exp)=>{
     await supabase.from('packages').insert({student_id:sid,original:parseInt(cr),credits:parseInt(cr),expiry:exp});
     onRefresh();
@@ -420,9 +426,16 @@ function StudentsPanel({students,onRefresh}){
             </div>
             {p.sessions?.length>0&&<details>
               <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer",userSelect:"none"}}>Redeemed ({p.sessions.length})</summary>
-              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+              <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:4}}>
                 {[...p.sessions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((s,i)=>(
-                  <span key={i} style={{background:"rgba(91,184,176,0.2)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s.date)}</span>
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"rgba(91,184,176,0.12)",borderRadius:6,padding:"4px 8px"}}>
+                    <span style={{fontSize:"0.73rem",color:C.teal}}>{fmt(s.date)}</span>
+                    <button
+                      onClick={()=>setModal({type:"undo",session:s,pkg:p,name:st.name})}
+                      style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.72rem",padding:"0 2px"}}
+                      title="Undo this session"
+                    >↩ undo</button>
+                  </div>
                 ))}
               </div>
             </details>}
@@ -453,6 +466,15 @@ function StudentsPanel({students,onRefresh}){
         </div>}
       </div>;
     })}
+    {modal?.type==="undo"&&<Modal title="↩ Undo session" onClose={()=>setModal(null)}>
+      <div style={{fontSize:"0.9rem",marginBottom:18}}>
+        Remove session <strong>{fmt(modal.session.date)}</strong> for <strong>{modal.name}</strong> and restore 1 credit?
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button style={{...S.btnMain,margin:0}} onClick={()=>{undoSession(modal.session,modal.pkg);setModal(null);}}>Confirm</button>
+        <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
+      </div>
+    </Modal>}
     {modal?.type==="deduct"&&<Modal title="✓ Mark class as done" onClose={()=>setModal(null)}>
       <div style={{color:C.muted,fontSize:"0.9rem",marginBottom:14}}>Student: <strong>{modal.name}</strong></div>
       <label style={S.lbl}>Class date</label>
