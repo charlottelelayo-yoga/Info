@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "./supabase.js";
 
 const fontLink = document.createElement("link");
 fontLink.rel = "stylesheet";
@@ -22,50 +23,6 @@ const inOneYear = () => { const d=new Date(); d.setFullYear(d.getFullYear()+1); 
 const isExp = d => new Date(d) < new Date();
 const daysLeft = d => Math.ceil((new Date(d)-new Date())/86400000);
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-
-const INIT_SCHED = [
-  {id:1,day:"Monday",time:"7:00am",title:"Forward Bending",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
-  {id:2,day:"Monday",time:"8:15am",title:"Spinal Movement",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
-  {id:3,day:"Monday",time:"7:30pm",title:"Yoga — Beginner",location:"Private Group Class",address:"Bangkapi Mansion, Sukhumvit Soi 12",type:"yoga",isPrivate:true,confirmed:false,contactWhatsapp:true,contactLine:false,inPackage:true,note:"Beginner level",description:""},
-  {id:4,day:"Wednesday",time:"7:00am",title:"Office Syndrome",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
-  {id:5,day:"Wednesday",time:"8:15am",title:"Hip & Shoulders",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
-  {id:6,day:"Wednesday",time:"7:00pm",title:"Vinyasa — Intermediate",location:"Private Group Class",address:"Siam Court, Sukhumvit Soi 4",type:"yoga",isPrivate:true,confirmed:false,contactWhatsapp:true,contactLine:false,inPackage:true,note:"Intermediate level",description:""},
-  {id:7,day:"Thursday",time:"7:00am",title:"Hatha",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
-  {id:8,day:"Thursday",time:"8:15am",title:"Full Body Opening",location:"Isora Wellness",address:"Sathorn Soi 12",type:"yoga",isPrivate:false,confirmed:false,contactLine:true,contactWhatsapp:false,inPackage:false,note:"",description:""},
-  {id:9,day:"Thursday",time:"6:45pm",title:"Sound Healing",location:"Aadi Yoga Center",address:"Sukhumvit Soi 10",type:"sound",isPrivate:false,confirmed:false,contactWhatsapp:false,contactLine:false,inPackage:false,note:"",description:""},
-  {id:10,day:"Friday",time:"12:30pm",title:"Vinyasa — Intermediate",location:"Private Group Class",address:"Benjakitti Park",type:"yoga",isPrivate:true,confirmed:false,contactWhatsapp:true,contactLine:false,inPackage:true,note:"Intermediate level",description:""},
-];
-
-const INIT_EVENTS = [
-  {
-    id:1,date:"2026-03-15",time:"11:00am",title:"Serene Sunday",subtitle:"Breathwork · Meditation · Sound",
-    price:"550 THB",type:"sound",confirmed:false,contactWhatsapp:true,note:"1h30",
-    description:"Fully let go in this 90-minute immersive experience designed for deep rest and inner stillness. We open with gentle breathwork to calm the nervous system, move into a guided meditation to quiet the mind, then surrender to an extended sound bath — bowls, chimes and resonant tones guiding you into a profound state of relaxation. No experience needed. Just come as you are."
-  },
-];
-
-const INIT_BANNER = { active: false, message: "", dateFrom: "", dateTo: "", resumeDate: "" };
-
-const mkStudent = (id, name, pkgs) => ({ id, name, packages: pkgs });
-const mkPkg = (id, original, expiry, sessions) => ({ id, original, expiry, credits: original - sessions.length, sessions });
-const d = (day, mon, yr=2026) => `${yr}-${String(mon).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-
-const INIT_STUDENTS = [
-  mkStudent(1,"Sarah",     [mkPkg(1,10,"2027-01-07",[d(7,1),d(13,1),d(21,1),d(28,1),d(4,2),d(10,2),d(18,2)])]),
-  mkStudent(2,"Marine",    [mkPkg(2,10,"2027-01-07",[d(7,1),d(13,1),d(21,1),d(18,2)])]),
-  mkStudent(3,"Stéphane",  [mkPkg(3,5, "2027-01-12",[d(12,1),d(19,1),d(26,1),d(2,2)])]),
-  mkStudent(4,"Gaëtan",    [mkPkg(4,10,"2027-01-12",[d(12,1),d(19,1),d(26,1),d(2,2),d(9,3)])]),
-  mkStudent(5,"Maylis",    [mkPkg(5,10,"2027-01-13",[d(13,1),d(6,2),d(13,2)])]),
-  mkStudent(6,"Françoise", [mkPkg(6,10,"2027-01-13",[d(13,1),d(4,2),d(6,2),d(10,2),d(13,2),d(4,3)])]),
-  mkStudent(7,"Théo",      [mkPkg(7,5, "2027-01-19",[d(19,1),d(26,1),d(9,3)])]),
-  mkStudent(8,"Philippe",  [mkPkg(8,5, "2027-01-19",[d(19,1),d(2,2)])]),
-  mkStudent(9,"Joffrey",   [mkPkg(9,5, "2027-01-19",[d(19,1),d(26,1),d(16,2)])]),
-  mkStudent(10,"Lucie",    [mkPkg(10,10,"2027-01-21",[d(21,1),d(4,2),d(18,2),d(4,3)])]),
-  mkStudent(11,"Robin",    [mkPkg(11,5, "2027-01-28",[d(28,1),d(4,2)])]),
-  mkStudent(12,"Alexandre",[mkPkg(12,5, "2027-02-02",[d(2,2),d(16,2),d(9,3)])]),
-  mkStudent(13,"Tanguy",   [mkPkg(13,5, "2027-03-09",[d(9,3)])]),
-  mkStudent(14,"Léa",      [mkPkg(14,5, "2027-03-09",[d(9,3)])]),
-];
 
 const S = {
   wrap:{fontFamily:"'DM Sans',sans-serif",minHeight:"100vh",background:C.bg,color:C.text},
@@ -96,62 +53,70 @@ function Modal({title,onClose,children}){
   </div></div>;
 }
 
-// ── ABSENCE BANNER (public) ───────────────────────────────────────────────────
 function AbsenceBanner({banner}){
-  if(!banner.active || !banner.message) return null;
+  if(!banner?.active || !banner?.message) return null;
   return (
     <div style={{background:"#fff8ed",borderBottom:`1px solid #f0d890`,padding:"10px 20px",textAlign:"center"}}>
       <span style={{fontSize:"0.9rem",color:"#8a6a20"}}>
         🌴 {banner.message}
-        {banner.dateFrom && banner.dateTo && (
-          <span style={{fontWeight:600}}> · {fmt(banner.dateFrom)} – {fmt(banner.dateTo)}</span>
-        )}
-        {banner.resumeDate && (
-          <span> · Back {fmt(banner.resumeDate)}</span>
-        )}
+        {banner.date_from && banner.date_to && <span style={{fontWeight:600}}> · {fmt(banner.date_from)} – {fmt(banner.date_to)}</span>}
+        {banner.resume_date && <span> · Back {fmt(banner.resume_date)}</span>}
       </span>
     </div>
   );
 }
 
-// ── ABSENCE BANNER EDITOR (admin) ────────────────────────────────────────────
-function BannerEditor({banner,setBanner}){
+function BannerEditor({banner,onUpdate}){
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(banner);
 
-  const save=()=>{setBanner(draft);setEditing(false);};
-  const toggle=()=>{const updated={...banner,active:!banner.active};setBanner(updated);setDraft(updated);};
+  useEffect(()=>setDraft(banner),[banner]);
+
+  const save=async()=>{
+    await supabase.from("banner").update({
+      message:draft.message,
+      date_from:draft.date_from||null,
+      date_to:draft.date_to||null,
+      resume_date:draft.resume_date||null,
+    }).eq("id",1);
+    onUpdate({...draft});
+    setEditing(false);
+  };
+
+  const toggle=async()=>{
+    const updated={...banner,active:!banner.active};
+    await supabase.from("banner").update({active:updated.active}).eq("id",1);
+    onUpdate(updated);
+  };
 
   return (
-    <div style={{...S.card,border:`1.5px solid ${banner.active?"#f0d890":C.border}`,background:banner.active?"#fff8ed":C.card,marginBottom:14}}>
+    <div style={{...S.card,border:`1.5px solid ${banner?.active?"#f0d890":C.border}`,background:banner?.active?"#fff8ed":C.card,marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
           <div style={{fontWeight:600,fontSize:"0.9rem",color:C.text}}>🌴 Absence banner</div>
-          <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{banner.active?"Visible to students":"Hidden"}</div>
+          <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{banner?.active?"Visible to students":"Hidden"}</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>setEditing(!editing)} style={S.btnSm("transparent",C.teal)}>Edit</button>
-          <button onClick={toggle} style={S.btnSm(banner.active?C.amber:C.green)}>
-            {banner.active?"Deactivate":"Activate"}
-          </button>
+          <button onClick={toggle} style={S.btnSm(banner?.active?C.amber:C.green)}>{banner?.active?"Deactivate":"Activate"}</button>
         </div>
       </div>
-      {banner.active && banner.message && (
+      {banner?.active&&banner?.message&&(
         <div style={{marginTop:10,padding:"8px 12px",background:"rgba(240,216,144,0.2)",borderRadius:8,fontSize:"0.82rem",color:"#8a6a20",fontStyle:"italic"}}>
-          "{banner.message}{banner.dateFrom&&banner.dateTo?` · ${fmt(banner.dateFrom)} – ${fmt(banner.dateTo)}`:""}
-          {banner.resumeDate?` · Back ${fmt(banner.resumeDate)}`:""}"
+          "{banner.message}{banner.date_from&&banner.date_to?` · ${fmt(banner.date_from)} – ${fmt(banner.date_to)}`:""}
+          {banner.resume_date?` · Back ${fmt(banner.resume_date)}`:""}"
         </div>
       )}
       {editing&&(
         <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
           <label style={S.lbl}>Message</label>
-          <input style={S.inp} value={draft.message} onChange={e=>setDraft({...draft,message:e.target.value})} placeholder="No classes from… / Taking a break…"/>
+          <input style={S.inp} value={draft.message||""} onChange={e=>setDraft({...draft,message:e.target.value})} placeholder="No classes from…"/>
           <div style={{display:"flex",gap:10}}>
-            <div style={{flex:1}}><label style={S.lbl}>From</label><input style={S.inp} type="date" value={draft.dateFrom} onChange={e=>setDraft({...draft,dateFrom:e.target.value})}/></div>
-            <div style={{flex:1}}><label style={S.lbl}>To</label><input style={S.inp} type="date" value={draft.dateTo} onChange={e=>setDraft({...draft,dateTo:e.target.value})}/></div>
+            <div style={{flex:1}}><label style={S.lbl}>From</label><input style={S.inp} type="date" value={draft.date_from||""} onChange={e=>setDraft({...draft,date_from:e.target.value})}/></div>
+            <div style={{flex:1}}><label style={S.lbl}>To</label><input style={S.inp} type="date" value={draft.date_to||""} onChange={e=>setDraft({...draft,date_to:e.target.value})}/></div>
           </div>
           <label style={S.lbl}>Back on</label>
-          <input style={S.inp} type="date" value={draft.resumeDate} onChange={e=>setDraft({...draft,resumeDate:e.target.value})}/>
+          <input style={S.inp} type="date" value={draft.resume_date||""} onChange={e=>setDraft({...draft,resume_date:e.target.value})}/>
           <div style={{display:"flex",gap:8,marginTop:4}}>
             <button style={{...S.btnMain,margin:0}} onClick={save}>Save</button>
             <button style={{...S.btnGhost,margin:0}} onClick={()=>setEditing(false)}>Cancel</button>
@@ -162,11 +127,10 @@ function BannerEditor({banner,setBanner}){
   );
 }
 
-// ── CLASS CARD ────────────────────────────────────────────────────────────────
 function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
   const [open,setOpen]=useState(false);
   return (
-    <div style={{background:cls.isPrivate?"#fff":C.tealLight,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${cls.isPrivate?C.border:"rgba(91,184,176,0.25)"}`,borderLeft:`3px solid ${cls.type==="sound"?C.purple:C.teal}`}}>
+    <div style={{background:cls.is_private?"#fff":C.tealLight,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${cls.is_private?C.border:"rgba(91,184,176,0.25)"}`,borderLeft:`3px solid ${cls.type==="sound"?C.purple:C.teal}`}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div style={{flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
@@ -174,7 +138,7 @@ function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
             {cls.confirmed&&<span style={{background:C.greenLight,color:C.green,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10}}>✓ Confirmed</span>}
           </div>
           <div style={{fontSize:"0.82rem",color:C.muted}}>{cls.location}</div>
-          {cls.inPackage&&<span style={{background:C.tealLight,color:C.teal,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10,marginTop:4,display:"inline-block",border:`1px solid ${C.tealMid}`}}>Included in package</span>}
+          {cls.in_package&&<span style={{background:C.tealLight,color:C.teal,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10,marginTop:4,display:"inline-block",border:`1px solid ${C.tealMid}`}}>Included in package</span>}
         </div>
         <button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px"}}>{open?"▲":"▼"}</button>
       </div>
@@ -183,8 +147,8 @@ function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
         {cls.description&&<div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.6,marginBottom:8,fontStyle:"italic"}}>{cls.description}</div>}
         {cls.note&&!cls.description&&<div style={{fontSize:"0.82rem",color:C.muted,marginBottom:8,fontStyle:"italic"}}>{cls.note}</div>}
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          {cls.contactWhatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>💬 WhatsApp to book</a>}
-          {cls.contactLine&&<a href="https://line.me/ti/p/~isorawellness" target="_blank" rel="noreferrer" style={{background:"#06C755",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>Contact on Line</a>}
+          {cls.contact_whatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>💬 WhatsApp to book</a>}
+          {cls.contact_line&&<a href="https://line.me/ti/p/~isorawellness" target="_blank" rel="noreferrer" style={{background:"#06C755",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>Contact on Line</a>}
         </div>
         {isAdmin&&<div style={{display:"flex",gap:8,marginTop:10}}>
           <button style={S.btnSm(cls.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(cls.id)}>{cls.confirmed?"Unconfirm":"✓ Confirm"}</button>
@@ -195,7 +159,6 @@ function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
   );
 }
 
-// ── EVENT CARD ────────────────────────────────────────────────────────────────
 function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
   const [open,setOpen]=useState(false);
   return (
@@ -207,19 +170,17 @@ function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
             {e.confirmed&&<span style={{background:C.greenLight,color:C.green,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10}}>✓ Confirmed</span>}
           </div>
           <div style={{fontSize:"0.82rem",color:C.muted}}>{fmt(e.date)} · {e.time}</div>
-          {e.subtitle&&<div style={{fontSize:"0.78rem",color:C.purple,marginTop:3,letterSpacing:"0.02em"}}>{e.subtitle}</div>}
+          {e.subtitle&&<div style={{fontSize:"0.78rem",color:C.purple,marginTop:3}}>{e.subtitle}</div>}
           {e.price&&<div style={{fontSize:"0.85rem",fontWeight:600,color:C.text,marginTop:4}}>{e.price}</div>}
         </div>
-        {(e.description||e.contactWhatsapp||isAdmin)&&(
+        {(e.description||e.contact_whatsapp||isAdmin)&&(
           <button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px",flexShrink:0}}>{open?"▲":"▼"}</button>
         )}
       </div>
       {open&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(155,127,194,0.15)"}}>
-        {e.description&&(
-          <div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}>{e.description}</div>
-        )}
-        {e.contactWhatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"inline-block",background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none",marginBottom:isAdmin?10:0}}>💬 WhatsApp to book</a>}
-        {isAdmin&&<div style={{display:"flex",gap:8,marginTop:e.contactWhatsapp?8:0}}>
+        {e.description&&<div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}>{e.description}</div>}
+        {e.contact_whatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"inline-block",background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none",marginBottom:isAdmin?10:0}}>💬 WhatsApp to book</a>}
+        {isAdmin&&<div style={{display:"flex",gap:8,marginTop:e.contact_whatsapp?8:0}}>
           <button style={S.btnSm(e.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(e.id)}>{e.confirmed?"Unconfirm":"✓ Confirm"}</button>
           <button style={S.btnSm("transparent",C.teal)} onClick={()=>onEdit(e)}>Edit</button>
         </div>}
@@ -228,14 +189,13 @@ function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
   );
 }
 
-// ── SCHEDULE VIEW ─────────────────────────────────────────────────────────────
-function ScheduleView({schedule,events,isAdmin,banner,onToggleConfirm,onEdit,onToggleEventConfirm,onEditEvent,onAddClass,onAddEvent}){
+function ScheduleView({schedule,events,isAdmin,onToggleConfirm,onEdit,onToggleEventConfirm,onEditEvent,onAddClass,onAddEvent}){
   const [typeFilter,setTypeFilter]=useState("all");
   const [showStudio,setShowStudio]=useState(true);
-  const filtered=schedule.filter(c=>(typeFilter==="all"||c.type===typeFilter)&&(showStudio||c.isPrivate));
+  const filtered=schedule.filter(c=>(typeFilter==="all"||c.type===typeFilter)&&(showStudio||c.is_private));
   const filteredEvents=typeFilter==="all"?events:events.filter(e=>e.type===typeFilter);
   const upcoming=filteredEvents.filter(e=>new Date(e.date)>=new Date()).sort((a,b)=>new Date(a.date)-new Date(b.date));
-  const byDay=DAYS.map(day=>({day,priv:filtered.filter(c=>c.day===day&&c.isPrivate),studio:filtered.filter(c=>c.day===day&&!c.isPrivate)})).filter(d=>d.priv.length>0||d.studio.length>0);
+  const byDay=DAYS.map(day=>({day,priv:filtered.filter(c=>c.day===day&&c.is_private),studio:filtered.filter(c=>c.day===day&&!c.is_private)})).filter(d=>d.priv.length>0||d.studio.length>0);
   return <div style={S.page}>
     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14,alignItems:"center"}}>
       {[{v:"all",l:"All"},{v:"yoga",l:"🧘 Yoga"},{v:"sound",l:"🔔 Sound"}].map(o=>(
@@ -267,7 +227,6 @@ function ScheduleView({schedule,events,isAdmin,banner,onToggleConfirm,onEdit,onT
   </div>;
 }
 
-// ── PRICING ───────────────────────────────────────────────────────────────────
 function PricingTab(){
   const groupPlans=[
     {id:"single",label:"Drop-in",classes:"1 class",price:"400",perClass:"400 / class",highlight:false,badge:null,desc:"Try a class or drop in when your schedule allows."},
@@ -337,12 +296,14 @@ function PricingTab(){
   </div>;
 }
 
-// ── MY CLASSES ────────────────────────────────────────────────────────────────
 function MyClassesTab({students}){
   const [input,setInput]=useState("");
   const [found,setFound]=useState(null);
   const [err,setErr]=useState("");
-  const search=()=>{const f=students.find(s=>s.name.toLowerCase()===input.trim().toLowerCase());f?(setFound(f),setErr("")):(setFound(null),setErr("Name not found — check the spelling!"));};
+  const search=()=>{
+    const f=students.find(s=>s.name.toLowerCase()===input.trim().toLowerCase());
+    f?(setFound(f),setErr("")):(setFound(null),setErr("Name not found — check the spelling!"));
+  };
   const getActive=st=>st.packages.filter(p=>!isExp(p.expiry)&&p.credits>0);
   const tot=st=>getActive(st).reduce((a,p)=>a+p.credits,0);
   return <div style={S.page}>
@@ -371,10 +332,10 @@ function MyClassesTab({students}){
                     {daysLeft(p.expiry)<30?`${daysLeft(p.expiry)}d left`:`Expires ${fmt(p.expiry)}`}
                   </span>
                 </div>
-                <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions.length?8:0}}>
+                <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions&&p.sessions.length?8:0}}>
                   <div style={{width:`${((p.original-p.credits)/p.original)*100}%`,height:4,background:C.teal,borderRadius:4}}/>
                 </div>
-                {p.sessions.length>0&&<details>
+                {p.sessions&&p.sessions.length>0&&<details>
                   <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer"}}>Redeemed ({p.sessions.length})</summary>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
                     {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
@@ -390,32 +351,26 @@ function MyClassesTab({students}){
   </div>;
 }
 
-// ── STUDENTS PANEL ────────────────────────────────────────────────────────────
-function StudentsPanel({students,setStudents}){
+function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
   const [modal,setModal]=useState(null);
   const [search,setSearch]=useState("");
   const [newName,setNewName]=useState(""); const [newCr,setNewCr]=useState(10); const [newExp,setNewExp]=useState(inOneYear()); const [addMsg,setAddMsg]=useState("");
   const [showArch,setShowArch]=useState({});
-  const upd=fn=>setStudents(prev=>fn(prev));
   const getActive=st=>st.packages.filter(p=>!isExp(p.expiry)&&p.credits>0);
   const getArchived=st=>st.packages.filter(p=>isExp(p.expiry)||p.credits===0);
   const tot=st=>getActive(st).reduce((a,p)=>a+p.credits,0);
   const filtered=students.filter(s=>s.name.toLowerCase().includes(search.toLowerCase()));
-  const addStudent=()=>{
+
+  const addStudent=async()=>{
     if(!newName.trim())return;
     if(students.find(s=>s.name.toLowerCase()===newName.trim().toLowerCase())){setAddMsg("Already exists!");return;}
-    upd(l=>[...l,{id:Date.now(),name:newName.trim(),packages:[{id:Date.now(),credits:parseInt(newCr),original:parseInt(newCr),expiry:newExp,sessions:[]}]}]);
+    const {data:stu}=await supabase.from("students").insert({name:newName.trim()}).select().single();
+    if(stu){
+      const {data:pkg}=await supabase.from("packages").insert({student_id:stu.id,original:parseInt(newCr),credits:parseInt(newCr),expiry:newExp,sessions:[]}).select().single();
+      if(pkg) onAddPackage(stu,pkg);
+    }
     setNewName("");setNewCr(10);setNewExp(inOneYear());setAddMsg("✓ Added!");setTimeout(()=>setAddMsg(""),2500);
   };
-  const deduct=(sid,date)=>upd(l=>l.map(st=>{
-    if(st.id!==sid)return st;
-    const active=[...st.packages].filter(p=>!isExp(p.expiry)&&p.credits>0).sort((x,y)=>new Date(x.expiry)-new Date(y.expiry));
-    if(!active.length)return st;
-    const oldest=active[0];
-    return {...st,packages:st.packages.map(p=>p.id===oldest.id?{...p,credits:p.credits-1,sessions:[...p.sessions,date]}:p)};
-  }));
-  const addPkg=(sid,cr,exp)=>upd(l=>l.map(st=>st.id!==sid?st:{...st,packages:[...st.packages,{id:Date.now(),credits:parseInt(cr),original:parseInt(cr),expiry:exp,sessions:[]}]}));
-  const delStudent=sid=>upd(l=>l.filter(s=>s.id!==sid));
 
   return <div style={S.page}>
     <div style={{position:"relative",marginBottom:14}}>
@@ -449,10 +404,10 @@ function StudentsPanel({students,setStudents}){
                 {isExp(p.expiry)?"Expired":daysLeft(p.expiry)<30?`${daysLeft(p.expiry)}d left`:`Exp. ${fmt(p.expiry)}`}
               </span>
             </div>
-            <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions.length?8:0}}>
+            <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions&&p.sessions.length?8:0}}>
               <div style={{width:`${((p.original-p.credits)/p.original)*100}%`,height:4,background:C.teal,borderRadius:4}}/>
             </div>
-            {p.sessions.length>0&&<details>
+            {p.sessions&&p.sessions.length>0&&<details>
               <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer",userSelect:"none"}}>Redeemed ({p.sessions.length})</summary>
               <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
                 {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
@@ -477,7 +432,7 @@ function StudentsPanel({students,setStudents}){
                 <span style={{fontSize:"0.82rem",color:C.muted,fontWeight:600}}>{p.original} classes · {isExp(p.expiry)?"expired":"used up"} {fmt(p.expiry)}</span>
                 <span style={{fontSize:"0.75rem",color:C.muted}}>{p.original-p.credits} redeemed</span>
               </div>
-              {p.sessions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
+              {p.sessions&&p.sessions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
                 {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
                   <span key={i} style={{background:"#e8e8e8",borderRadius:5,padding:"1px 7px",fontSize:"0.7rem",color:"#999"}}>{fmt(s)}</span>
                 ))}
@@ -492,7 +447,7 @@ function StudentsPanel({students,setStudents}){
       <label style={S.lbl}>Class date</label>
       <input style={S.inp} type="date" value={modal.date} onChange={e=>setModal({...modal,date:e.target.value})}/>
       <div style={{display:"flex",gap:10,marginTop:8}}>
-        <button style={{...S.btnMain,margin:0}} onClick={()=>{deduct(modal.sid,modal.date);setModal(null);}}>Confirm</button>
+        <button style={{...S.btnMain,margin:0}} onClick={()=>{onDeduct(modal.sid,modal.date);setModal(null);}}>Confirm</button>
         <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
       </div>
     </Modal>}
@@ -507,21 +462,25 @@ function StudentsPanel({students,setStudents}){
       <label style={S.lbl}>Expiry date</label>
       <input style={S.inp} type="date" value={modal.expiry} onChange={e=>setModal({...modal,expiry:e.target.value})}/>
       <div style={{display:"flex",gap:10,marginTop:8}}>
-        <button style={{...S.btnMain,margin:0}} onClick={()=>{addPkg(modal.sid,modal.credits,modal.expiry);setModal(null);}}>Add package</button>
+        <button style={{...S.btnMain,margin:0}} onClick={async()=>{
+          const sid=modal.sid; const cr=parseInt(modal.credits); const exp=modal.expiry;
+          const {data:pkg}=await supabase.from("packages").insert({student_id:sid,original:cr,credits:cr,expiry:exp,sessions:[]}).select().single();
+          if(pkg) onAddPackage(null,pkg);
+          setModal(null);
+        }}>Add package</button>
         <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
       </div>
     </Modal>}
     {modal?.type==="del"&&<Modal title="Delete student" onClose={()=>setModal(null)}>
       <div style={{fontSize:"0.9rem",marginBottom:18}}>Delete <strong>{modal.name}</strong> and all their packages?</div>
       <div style={{display:"flex",gap:10}}>
-        <button style={{...S.btnMain,margin:0,background:C.red}} onClick={()=>{delStudent(modal.sid);setModal(null);}}>Delete</button>
+        <button style={{...S.btnMain,margin:0,background:C.red}} onClick={()=>{onDeleteStudent(modal.sid);setModal(null);}}>Delete</button>
         <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
       </div>
     </Modal>}
   </div>;
 }
 
-// ── EDIT MODALS ───────────────────────────────────────────────────────────────
 function ClassEditModal({cls,onSave,onDelete,onClose}){
   const [v,setV]=useState(cls);
   return <Modal title={v.id?"Edit class":"New class"} onClose={onClose}>
@@ -529,13 +488,13 @@ function ClassEditModal({cls,onSave,onDelete,onClose}){
       <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} value={v[k]||""} onChange={e=>setV({...v,[k]:e.target.value})}/></div>
     ))}
     <label style={S.lbl}>Description (optional)</label>
-    <textarea style={{...S.inp,minHeight:80,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="Class theme, details, teacher absence notice…"/>
+    <textarea style={{...S.inp,minHeight:80,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="Class theme, details…"/>
     <label style={S.lbl}>Day</label>
     <select style={S.inp} value={v.day} onChange={e=>setV({...v,day:e.target.value})}>{DAYS.map(d=><option key={d}>{d}</option>)}</select>
     <label style={S.lbl}>Type</label>
     <select style={S.inp} value={v.type} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
-      {[["isPrivate","Private"],["inPackage","In package"],["contactWhatsapp","WhatsApp"],["contactLine","Line"]].map(([k,l])=>(
+      {[["is_private","Private"],["in_package","In package"],["contact_whatsapp","WhatsApp"],["contact_line","Line"]].map(([k,l])=>(
         <label key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",cursor:"pointer"}}>
           <input type="checkbox" checked={!!v[k]} onChange={e=>setV({...v,[k]:e.target.checked})}/>{l}
         </label>
@@ -556,12 +515,12 @@ function EventEditModal({evt,onSave,onDelete,onClose}){
       <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} value={v[k]||""} onChange={e=>setV({...v,[k]:e.target.value})}/></div>
     ))}
     <label style={S.lbl}>Description (optional)</label>
-    <textarea style={{...S.inp,minHeight:90,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="What to expect, mood, experience…"/>
+    <textarea style={{...S.inp,minHeight:90,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="What to expect…"/>
     <label style={S.lbl}>Date</label><input style={S.inp} type="date" value={v.date} onChange={e=>setV({...v,date:e.target.value})}/>
     <label style={S.lbl}>Type</label>
     <select style={S.inp} value={v.type} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
     <label style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",cursor:"pointer",marginBottom:14}}>
-      <input type="checkbox" checked={!!v.contactWhatsapp} onChange={e=>setV({...v,contactWhatsapp:e.target.checked})}/>WhatsApp button
+      <input type="checkbox" checked={!!v.contact_whatsapp} onChange={e=>setV({...v,contact_whatsapp:e.target.checked})}/>WhatsApp button
     </label>
     <div style={{display:"flex",gap:8}}>
       <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
@@ -571,7 +530,6 @@ function EventEditModal({evt,onSave,onDelete,onClose}){
   </Modal>;
 }
 
-// ── SCREENS ───────────────────────────────────────────────────────────────────
 function StudentScreen({schedule,events,students,banner,onAdmin}){
   const [tab,setTab]=useState("schedule");
   return <div style={S.wrap}>
@@ -587,7 +545,7 @@ function StudentScreen({schedule,events,students,banner,onAdmin}){
       </div>
     </div>
     <AbsenceBanner banner={banner}/>
-    {tab==="schedule"&&<ScheduleView schedule={schedule} events={events} isAdmin={false} banner={banner}/>}
+    {tab==="schedule"&&<ScheduleView schedule={schedule} events={events} isAdmin={false}/>}
     {tab==="my"&&<MyClassesTab students={students}/>}
     {tab==="pricing"&&<PricingTab/>}
   </div>;
@@ -615,20 +573,73 @@ function AdminScreen({schedule,setSchedule,events,setEvents,students,setStudents
   const [tab,setTab]=useState("schedule");
   const [editCls,setEditCls]=useState(null);
   const [editEvt,setEditEvt]=useState(null);
-  const toggleConfirm=id=>setSchedule(s=>s.map(c=>c.id===id?{...c,confirmed:!c.confirmed}:c));
-  const toggleEventConfirm=id=>setEvents(e=>e.map(ev=>ev.id===id?{...ev,confirmed:!ev.confirmed}:ev));
-  const saveClass=cls=>{
-    if(cls.id&&schedule.find(c=>c.id===cls.id)) setSchedule(s=>s.map(c=>c.id===cls.id?cls:c));
-    else setSchedule(s=>[...s,{...cls,id:Date.now(),confirmed:false}]);
+
+  const toggleConfirm=async(id)=>{
+    const cls=schedule.find(c=>c.id===id);
+    await supabase.from("schedule").update({confirmed:!cls.confirmed}).eq("id",id);
+    setSchedule(s=>s.map(c=>c.id===id?{...c,confirmed:!c.confirmed}:c));
+  };
+  const toggleEventConfirm=async(id)=>{
+    const ev=events.find(e=>e.id===id);
+    await supabase.from("events").update({confirmed:!ev.confirmed}).eq("id",id);
+    setEvents(e=>e.map(ev=>ev.id===id?{...ev,confirmed:!ev.confirmed}:ev));
+  };
+  const saveClass=async(cls)=>{
+    const row={day:cls.day,time:cls.time,title:cls.title,location:cls.location,address:cls.address,type:cls.type,is_private:cls.is_private,in_package:cls.in_package,confirmed:cls.confirmed||false,contact_whatsapp:cls.contact_whatsapp,contact_line:cls.contact_line,note:cls.note||"",description:cls.description||""};
+    if(cls.id&&schedule.find(c=>c.id===cls.id)){
+      await supabase.from("schedule").update(row).eq("id",cls.id);
+      setSchedule(s=>s.map(c=>c.id===cls.id?{...cls}:c));
+    } else {
+      const {data}=await supabase.from("schedule").insert(row).select().single();
+      if(data) setSchedule(s=>[...s,data]);
+    }
     setEditCls(null);
   };
-  const delClass=id=>{setSchedule(s=>s.filter(c=>c.id!==id));setEditCls(null);};
-  const saveEvent=evt=>{
-    if(evt.id&&events.find(e=>e.id===evt.id)) setEvents(e=>e.map(ev=>ev.id===evt.id?evt:ev));
-    else setEvents(e=>[...e,{...evt,id:Date.now(),confirmed:false}]);
+  const delClass=async(id)=>{
+    await supabase.from("schedule").delete().eq("id",id);
+    setSchedule(s=>s.filter(c=>c.id!==id));
+    setEditCls(null);
+  };
+  const saveEvent=async(evt)=>{
+    const row={date:evt.date,time:evt.time,title:evt.title,subtitle:evt.subtitle||"",price:evt.price||"",type:evt.type,confirmed:evt.confirmed||false,contact_whatsapp:evt.contact_whatsapp,note:evt.note||"",description:evt.description||""};
+    if(evt.id&&events.find(e=>e.id===evt.id)){
+      await supabase.from("events").update(row).eq("id",evt.id);
+      setEvents(e=>e.map(ev=>ev.id===evt.id?{...evt}:ev));
+    } else {
+      const {data}=await supabase.from("events").insert(row).select().single();
+      if(data) setEvents(e=>[...e,data]);
+    }
     setEditEvt(null);
   };
-  const delEvent=id=>{setEvents(e=>e.filter(ev=>ev.id!==id));setEditEvt(null);};
+  const delEvent=async(id)=>{
+    await supabase.from("events").delete().eq("id",id);
+    setEvents(e=>e.filter(ev=>ev.id!==id));
+    setEditEvt(null);
+  };
+
+  const deduct=async(sid,date)=>{
+    const st=students.find(s=>s.id===sid);
+    const active=[...st.packages].filter(p=>!isExp(p.expiry)&&p.credits>0).sort((x,y)=>new Date(x.expiry)-new Date(y.expiry));
+    if(!active.length)return;
+    const pkg=active[0];
+    const newSessions=[...(pkg.sessions||[]),date];
+    await supabase.from("packages").update({credits:pkg.credits-1,sessions:newSessions}).eq("id",pkg.id);
+    setStudents(prev=>prev.map(s=>s.id!==sid?s:{...s,packages:s.packages.map(p=>p.id===pkg.id?{...p,credits:p.credits-1,sessions:newSessions}:p)}));
+  };
+
+  const addPackage=async(newStudent,pkg)=>{
+    if(newStudent){
+      setStudents(prev=>[...prev,{...newStudent,packages:[pkg]}]);
+    } else {
+      setStudents(prev=>prev.map(s=>s.id===pkg.student_id?{...s,packages:[...s.packages,pkg]}:s));
+    }
+  };
+
+  const deleteStudent=async(sid)=>{
+    await supabase.from("students").delete().eq("id",sid);
+    setStudents(prev=>prev.filter(s=>s.id!==sid));
+  };
+
   return <div style={S.wrap}>
     <div style={S.hdr}>
       <div style={S.logo}>✦ Admin</div>
@@ -641,28 +652,50 @@ function AdminScreen({schedule,setSchedule,events,setEvents,students,setStudents
       </div>
     </div>
     {tab==="schedule"&&<div style={S.page}>
-      <BannerEditor banner={banner} setBanner={setBanner}/>
+      <BannerEditor banner={banner} onUpdate={setBanner}/>
       <ScheduleView
         schedule={schedule} events={events} isAdmin={true}
         onToggleConfirm={toggleConfirm} onEdit={setEditCls}
         onToggleEventConfirm={toggleEventConfirm} onEditEvent={setEditEvt}
-        onAddClass={()=>setEditCls({day:"Monday",time:"",title:"",location:"",address:"",type:"yoga",isPrivate:true,inPackage:false,confirmed:false,contactWhatsapp:true,contactLine:false,note:"",description:""})}
-        onAddEvent={()=>setEditEvt({date:todayStr(),time:"",title:"",subtitle:"",price:"",type:"yoga",confirmed:false,contactWhatsapp:true,note:"",description:""})}
+        onAddClass={()=>setEditCls({day:"Monday",time:"",title:"",location:"",address:"",type:"yoga",is_private:true,in_package:false,confirmed:false,contact_whatsapp:true,contact_line:false,note:"",description:""})}
+        onAddEvent={()=>setEditEvt({date:todayStr(),time:"",title:"",subtitle:"",price:"",type:"yoga",confirmed:false,contact_whatsapp:true,note:"",description:""})}
       />
     </div>}
-    {tab==="students"&&<StudentsPanel students={students} setStudents={setStudents}/>}
+    {tab==="students"&&<StudentsPanel students={students} onDeduct={deduct} onAddPackage={addPackage} onDeleteStudent={deleteStudent}/>}
     {editCls&&<ClassEditModal cls={editCls} onSave={saveClass} onDelete={delClass} onClose={()=>setEditCls(null)}/>}
     {editEvt&&<EventEditModal evt={editEvt} onSave={saveEvent} onDelete={delEvent} onClose={()=>setEditEvt(null)}/>}
   </div>;
 }
 
-// ── ROOT ──────────────────────────────────────────────────────────────────────
 export default function Root(){
   const [screen,setScreen]=useState("student");
-  const [schedule,setSchedule]=useState(INIT_SCHED);
-  const [events,setEvents]=useState(INIT_EVENTS);
-  const [students,setStudents]=useState(INIT_STUDENTS);
-  const [banner,setBanner]=useState(INIT_BANNER);
+  const [schedule,setSchedule]=useState([]);
+  const [events,setEvents]=useState([]);
+  const [students,setStudents]=useState([]);
+  const [banner,setBanner]=useState(null);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    const load=async()=>{
+      const [sched,evts,stus,pkgs,ban]=await Promise.all([
+        supabase.from("schedule").select("*"),
+        supabase.from("events").select("*"),
+        supabase.from("students").select("*"),
+        supabase.from("packages").select("*"),
+        supabase.from("banner").select("*").eq("id",1).single(),
+      ]);
+      const studentsWithPkgs=(stus.data||[]).map(s=>({...s,packages:(pkgs.data||[]).filter(p=>p.student_id===s.id)}));
+      setSchedule(sched.data||[]);
+      setEvents(evts.data||[]);
+      setStudents(studentsWithPkgs);
+      setBanner(ban.data||{active:false,message:"",date_from:null,date_to:null,resume_date:null});
+      setLoading(false);
+    };
+    load();
+  },[]);
+
+  if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"'DM Sans',sans-serif",color:C.teal,fontSize:"1.1rem"}}>Loading…</div>;
+
   if(screen==="student") return <StudentScreen schedule={schedule} events={events} students={students} banner={banner} onAdmin={()=>setScreen("login")}/>;
   if(screen==="login") return <LoginScreen onSuccess={()=>setScreen("admin")} onBack={()=>setScreen("student")}/>;
   return <AdminScreen schedule={schedule} setSchedule={setSchedule} events={events} setEvents={setEvents} students={students} setStudents={setStudents} banner={banner} setBanner={setBanner} onLogout={()=>setScreen("student")}/>;
