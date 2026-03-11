@@ -126,7 +126,10 @@ function BannerEditor({banner,onUpdate}){
 function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
   const [open,setOpen]=useState(false);
   return (
-    <div style={{background:cls.is_private?"#fff":C.tealLight,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${cls.is_private?C.border:"rgba(91,184,176,0.25)"}`,borderLeft:`3px solid ${cls.type==="sound"?C.purple:C.teal}`}}>
+    <div
+      onClick={()=>setOpen(!open)}
+      style={{background:cls.is_private?"#fff":C.tealLight,borderRadius:12,padding:"12px 14px",marginBottom:8,border:`1px solid ${cls.is_private?C.border:"rgba(91,184,176,0.25)"}`,borderLeft:`3px solid ${cls.type==="sound"?C.purple:C.teal}`,cursor:"pointer"}}
+    >
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div style={{flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
@@ -136,20 +139,18 @@ function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
           <div style={{fontSize:"0.82rem",color:C.muted}}>{cls.location}</div>
           {cls.in_package&&<span style={{background:C.tealLight,color:C.teal,fontSize:"0.67rem",fontWeight:700,padding:"1px 7px",borderRadius:10,marginTop:4,display:"inline-block",border:`1px solid ${C.tealMid}`}}>Included in package</span>}
         </div>
-        <button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px"}}>{open?"▲":"▼"}</button>
+        <span style={{color:C.muted,fontSize:"0.8rem",paddingLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
       </div>
-      {open&&<div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+      {open&&<div onClick={e=>e.stopPropagation()} style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
         {cls.address&&<div style={{fontSize:"0.82rem",color:C.muted,marginBottom:6}}>📍 {cls.address}</div>}
         {cls.description&&<div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.6,marginBottom:8,fontStyle:"italic"}}>{cls.description}</div>}
         {cls.note&&!cls.description&&<div style={{fontSize:"0.82rem",color:C.muted,marginBottom:8,fontStyle:"italic"}}>{cls.note}</div>}
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {cls.contact_whatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>💬 WhatsApp to book</a>}
-          {cls.contact_line&&<a href="https://line.me/ti/p/~isorawellness" target="_blank" rel="noreferrer" style={{background:"#06C755",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>Contact on Line</a>}
+          {cls.contact_line&&<div style={{background:"#06C755",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,display:"inline-block"}}>LINE ID: @Isora</div>}
         </div>
         {isAdmin&&<div style={{display:"flex",gap:8,marginTop:10}}>
-          <button style={S.btnSm(cls.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(cls)}>
-            {cls.confirmed?"Unconfirm":"✓ Confirm"}
-          </button>
+          <button style={S.btnSm(cls.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(cls)}>{cls.confirmed?"Unconfirm":"✓ Confirm"}</button>
           <button style={S.btnSm("transparent",C.teal)} onClick={()=>onEdit(cls)}>Edit</button>
         </div>}
       </div>}
@@ -160,7 +161,10 @@ function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
 function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
   const [open,setOpen]=useState(false);
   return (
-    <div style={{background:C.purpleLight,borderRadius:12,padding:"14px 16px",marginBottom:8,border:"1px solid rgba(155,127,194,0.2)",borderLeft:`3px solid ${C.purple}`}}>
+    <div
+      onClick={()=>setOpen(!open)}
+      style={{background:C.purpleLight,borderRadius:12,padding:"14px 16px",marginBottom:8,border:"1px solid rgba(155,127,194,0.2)",borderLeft:`3px solid ${C.purple}`,cursor:"pointer"}}
+    >
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div style={{flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexWrap:"wrap"}}>
@@ -171,9 +175,9 @@ function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
           {e.subtitle&&<div style={{fontSize:"0.78rem",color:C.purple,marginTop:3}}>{e.subtitle}</div>}
           {e.price&&<div style={{fontSize:"0.85rem",fontWeight:600,color:C.text,marginTop:4}}>{e.price}</div>}
         </div>
-        {(e.description||e.contact_whatsapp||isAdmin)&&<button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px"}}>{open?"▲":"▼"}</button>}
+        <span style={{color:C.muted,fontSize:"0.8rem",paddingLeft:8,flexShrink:0}}>{open?"▲":"▼"}</span>
       </div>
-      {open&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(155,127,194,0.15)"}}>
+      {open&&<div onClick={e=>e.stopPropagation()} style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(155,127,194,0.15)"}}>
         {e.description&&<div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}>{e.description}</div>}
         {e.contact_whatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"inline-block",background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none",marginBottom:isAdmin?10:0}}>💬 WhatsApp to book</a>}
         {isAdmin&&<div style={{display:"flex",gap:8,marginTop:e.contact_whatsapp?8:0}}>
@@ -238,49 +242,71 @@ function PricingTab(){
   return <div style={S.page}>
     <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.3rem",color:C.text,marginBottom:4}}>Group Classes</div>
     <div style={{fontSize:"0.85rem",color:C.muted,marginBottom:18}}>Private group classes in Bangkok · all levels welcome</div>
+
     {groupPlans.map(p=>(
-      <div key={p.id} style={{...S.card,border:p.highlight?`2px solid ${C.teal}`:`1px solid ${C.border}`,marginBottom:10,position:"relative"}}>
-        {p.badge&&<div style={{position:"absolute",top:-1,right:16,background:p.highlight?C.teal:C.tealMid,color:p.highlight?"#fff":C.text,fontSize:"0.68rem",fontWeight:700,padding:"3px 10px",borderRadius:"0 0 8px 8px",letterSpacing:"0.06em",textTransform:"uppercase"}}>{p.badge}</div>}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,marginTop:p.badge?8:0}}>
+      <div key={p.id} style={{
+        background:"#fff",borderRadius:14,padding:"16px 18px",marginBottom:10,
+        border:p.highlight?`2px solid ${C.teal}`:`1px solid ${C.border}`,
+        boxShadow:p.highlight?"0 4px 16px rgba(91,184,176,0.12)":"0 1px 4px rgba(91,184,176,0.05)",
+        position:"relative"
+      }}>
+        {p.badge&&<div style={{
+          position:"absolute",top:-1,right:16,
+          background:p.highlight?C.teal:"rgba(91,184,176,0.12)",
+          color:p.highlight?"#fff":C.teal,
+          fontSize:"0.68rem",fontWeight:700,padding:"3px 10px",
+          borderRadius:"0 0 8px 8px",letterSpacing:"0.06em",textTransform:"uppercase"
+        }}>{p.badge}</div>}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginTop:p.badge?8:0}}>
           <div>
-            <div style={{fontWeight:700,fontSize:"1rem"}}>{p.label}</div>
+            <div style={{fontWeight:700,fontSize:"1rem",color:C.text}}>{p.label}</div>
             <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{p.classes}</div>
+            <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5,marginTop:6,maxWidth:200}}>{p.desc}</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-            <div style={{fontSize:"1.7rem",fontWeight:700,color:p.highlight?C.teal:C.text,lineHeight:1}}>{p.price}</div>
-            <div style={{fontSize:"0.72rem",color:C.muted,marginTop:2}}>THB · {p.perClass}</div>
+            <div style={{fontSize:"1.9rem",fontWeight:700,color:p.highlight?C.teal:C.text,lineHeight:1,fontFamily:"'DM Serif Display',serif"}}>{p.price}</div>
+            <div style={{fontSize:"0.7rem",color:C.muted,marginTop:3}}>THB</div>
+            <div style={{fontSize:"0.72rem",color:p.highlight?C.teal:C.muted,fontWeight:600,marginTop:2}}>{p.perClass}</div>
           </div>
         </div>
-        <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5}}>{p.desc}</div>
       </div>
     ))}
-    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:C.teal,color:"#fff",borderRadius:12,padding:"12px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>💬 Book a group class via WhatsApp</a>
+
+    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:C.teal,color:"#fff",borderRadius:12,padding:"12px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>
+      💬 Book a group class via WhatsApp
+    </a>
+
     <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.3rem",color:C.text,marginBottom:4}}>Private Sessions</div>
     <div style={{fontSize:"0.85rem",color:C.muted,marginBottom:14}}>One-on-one · tailored to your needs</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
       {privateSessions.map((s,i)=>(
-        <div key={i} style={{...S.card,marginBottom:0,textAlign:"center",padding:"18px 12px"}}>
+        <div key={i} style={{background:"#fff",borderRadius:14,padding:"18px 12px",textAlign:"center",border:`1px solid ${C.border}`,boxShadow:"0 1px 4px rgba(91,184,176,0.05)"}}>
           <div style={{fontSize:"1.6rem",marginBottom:6}}>{s.icon}</div>
-          <div style={{fontWeight:600,fontSize:"0.88rem",marginBottom:2}}>{s.label}</div>
+          <div style={{fontWeight:600,fontSize:"0.88rem",color:C.text,marginBottom:2}}>{s.label}</div>
           {s.sub&&<div style={{fontSize:"0.72rem",color:C.muted,marginBottom:4}}>{s.sub}</div>}
-          <div style={{fontSize:"1.05rem",fontWeight:700,color:C.teal,marginTop:4}}>{s.price}</div>
+          <div style={{fontSize:"1.1rem",fontWeight:700,color:C.teal,marginTop:6,fontFamily:"'DM Serif Display',serif"}}>{s.price}</div>
         </div>
       ))}
     </div>
-    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:"transparent",color:C.teal,border:`1.5px solid ${C.teal}`,borderRadius:12,padding:"11px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>💬 Book a private session via WhatsApp</a>
+
+    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:"transparent",color:C.teal,border:`1.5px solid ${C.teal}`,borderRadius:12,padding:"11px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>
+      💬 Book a private session via WhatsApp
+    </a>
+
     <div style={{...S.card,borderLeft:`3px solid ${C.purple}`,marginBottom:10}}>
       <div style={{fontWeight:600,fontSize:"0.95rem",marginBottom:4}}>🎵 Special Events</div>
       <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5}}>Sound healings, workshops & pop-up classes. Pricing varies — check the Schedule tab for upcoming sessions.</div>
     </div>
+
     <div style={{fontSize:"0.7rem",fontWeight:600,color:C.muted,textTransform:"uppercase",letterSpacing:"0.09em",margin:"20px 0 10px"}}>Also at Studios</div>
     <div style={{display:"flex",gap:10}}>
-      <a href="https://aadiyogacenter.com/packageplans" target="_blank" rel="noreferrer" style={{flex:1,...S.card,textDecoration:"none",textAlign:"center",marginBottom:0,borderTop:`3px solid ${C.teal}`,padding:"16px 12px"}}>
-        <div style={{fontSize:"0.95rem",fontWeight:600,marginBottom:4}}>Aadi Yoga</div>
+      <a href="https://aadiyogacenter.com/packageplans" target="_blank" rel="noreferrer" style={{flex:1,background:"#fff",borderRadius:14,textDecoration:"none",textAlign:"center",borderTop:`3px solid ${C.teal}`,border:`1px solid ${C.border}`,borderTopColor:C.teal,padding:"16px 12px",boxShadow:"0 1px 4px rgba(91,184,176,0.05)"}}>
+        <div style={{fontSize:"0.95rem",fontWeight:600,color:C.text,marginBottom:4}}>Aadi Yoga</div>
         <div style={{fontSize:"0.75rem",color:C.muted,marginBottom:8}}>Sukhumvit Soi 10</div>
         <div style={{fontSize:"0.78rem",color:C.teal,fontWeight:600}}>View packages →</div>
       </a>
-      <a href="https://www.instagram.com/p/DVbhgfYkqRQ/" target="_blank" rel="noreferrer" style={{flex:1,...S.card,textDecoration:"none",textAlign:"center",marginBottom:0,borderTop:`3px solid ${C.teal}`,padding:"16px 12px"}}>
-        <div style={{fontSize:"0.95rem",fontWeight:600,marginBottom:4}}>Isora Wellness</div>
+      <a href="https://www.instagram.com/p/DVbhgfYkqRQ/" target="_blank" rel="noreferrer" style={{flex:1,background:"#fff",borderRadius:14,textDecoration:"none",textAlign:"center",border:`1px solid ${C.border}`,borderTopColor:C.teal,borderTop:`3px solid ${C.teal}`,padding:"16px 12px",boxShadow:"0 1px 4px rgba(91,184,176,0.05)"}}>
+        <div style={{fontSize:"0.95rem",fontWeight:600,color:C.text,marginBottom:4}}>Isora Wellness</div>
         <div style={{fontSize:"0.75rem",color:C.muted,marginBottom:8}}>Sathorn Soi 12</div>
         <div style={{fontSize:"0.78rem",color:C.teal,fontWeight:600}}>View packages →</div>
       </a>
