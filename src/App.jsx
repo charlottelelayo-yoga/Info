@@ -68,61 +68,57 @@ function AbsenceBanner({banner}){
 
 function BannerEditor({banner,onUpdate}){
   const [editing,setEditing]=useState(false);
-  const [draft,setDraft]=useState(banner);
+  const [draft,setDraft]=useState(banner||{});
 
-  useEffect(()=>setDraft(banner),[banner]);
+  useEffect(()=>{ setDraft(banner||{}); },[banner]);
 
   const save=async()=>{
-    await supabase.from("banner").update({
+    await supabase.from('banner').update({
       message:draft.message,
       date_from:draft.date_from||null,
       date_to:draft.date_to||null,
       resume_date:draft.resume_date||null,
-    }).eq("id",1);
-    onUpdate({...draft});
+    }).eq('id',banner.id);
+    onUpdate();
     setEditing(false);
   };
 
   const toggle=async()=>{
-    const updated={...banner,active:!banner.active};
-    await supabase.from("banner").update({active:updated.active}).eq("id",1);
-    onUpdate(updated);
+    await supabase.from('banner').update({active:!banner.active}).eq('id',banner.id);
+    onUpdate();
   };
 
+  if(!banner) return null;
+
   return (
-    <div style={{...S.card,border:`1.5px solid ${banner?.active?"#f0d890":C.border}`,background:banner?.active?"#fff8ed":C.card,marginBottom:14}}>
+    <div style={{...S.card,border:`1.5px solid ${banner.active?"#f0d890":C.border}`,background:banner.active?"#fff8ed":C.card,marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <div style={{fontWeight:600,fontSize:"0.9rem",color:C.text}}>🌴 Absence banner</div>
-          <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{banner?.active?"Visible to students":"Hidden"}</div>
+          <div style={{fontWeight:600,fontSize:"0.9rem"}}>🌴 Absence banner</div>
+          <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{banner.active?"Visible to students":"Hidden"}</div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <div style={{display:"flex",gap:8}}>
           <button onClick={()=>setEditing(!editing)} style={S.btnSm("transparent",C.teal)}>Edit</button>
-          <button onClick={toggle} style={S.btnSm(banner?.active?C.amber:C.green)}>{banner?.active?"Deactivate":"Activate"}</button>
+          <button onClick={toggle} style={S.btnSm(banner.active?C.amber:C.green)}>{banner.active?"Deactivate":"Activate"}</button>
         </div>
       </div>
-      {banner?.active&&banner?.message&&(
-        <div style={{marginTop:10,padding:"8px 12px",background:"rgba(240,216,144,0.2)",borderRadius:8,fontSize:"0.82rem",color:"#8a6a20",fontStyle:"italic"}}>
-          "{banner.message}{banner.date_from&&banner.date_to?` · ${fmt(banner.date_from)} – ${fmt(banner.date_to)}`:""}
-          {banner.resume_date?` · Back ${fmt(banner.resume_date)}`:""}"
+      {banner.active&&banner.message&&<div style={{marginTop:10,padding:"8px 12px",background:"rgba(240,216,144,0.2)",borderRadius:8,fontSize:"0.82rem",color:"#8a6a20",fontStyle:"italic"}}>
+        "{banner.message}{banner.date_from&&banner.date_to?` · ${fmt(banner.date_from)} – ${fmt(banner.date_to)}`:""}{banner.resume_date?` · Back ${fmt(banner.resume_date)}`:""}"
+      </div>}
+      {editing&&<div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
+        <label style={S.lbl}>Message</label>
+        <input style={S.inp} value={draft.message||""} onChange={e=>setDraft({...draft,message:e.target.value})} placeholder="No classes from…"/>
+        <div style={{display:"flex",gap:10}}>
+          <div style={{flex:1}}><label style={S.lbl}>From</label><input style={S.inp} type="date" value={draft.date_from||""} onChange={e=>setDraft({...draft,date_from:e.target.value})}/></div>
+          <div style={{flex:1}}><label style={S.lbl}>To</label><input style={S.inp} type="date" value={draft.date_to||""} onChange={e=>setDraft({...draft,date_to:e.target.value})}/></div>
         </div>
-      )}
-      {editing&&(
-        <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
-          <label style={S.lbl}>Message</label>
-          <input style={S.inp} value={draft.message||""} onChange={e=>setDraft({...draft,message:e.target.value})} placeholder="No classes from…"/>
-          <div style={{display:"flex",gap:10}}>
-            <div style={{flex:1}}><label style={S.lbl}>From</label><input style={S.inp} type="date" value={draft.date_from||""} onChange={e=>setDraft({...draft,date_from:e.target.value})}/></div>
-            <div style={{flex:1}}><label style={S.lbl}>To</label><input style={S.inp} type="date" value={draft.date_to||""} onChange={e=>setDraft({...draft,date_to:e.target.value})}/></div>
-          </div>
-          <label style={S.lbl}>Back on</label>
-          <input style={S.inp} type="date" value={draft.resume_date||""} onChange={e=>setDraft({...draft,resume_date:e.target.value})}/>
-          <div style={{display:"flex",gap:8,marginTop:4}}>
-            <button style={{...S.btnMain,margin:0}} onClick={save}>Save</button>
-            <button style={{...S.btnGhost,margin:0}} onClick={()=>setEditing(false)}>Cancel</button>
-          </div>
+        <label style={S.lbl}>Back on</label>
+        <input style={S.inp} type="date" value={draft.resume_date||""} onChange={e=>setDraft({...draft,resume_date:e.target.value})}/>
+        <div style={{display:"flex",gap:8,marginTop:4}}>
+          <button style={{...S.btnMain,margin:0}} onClick={save}>Save</button>
+          <button style={{...S.btnGhost,margin:0}} onClick={()=>setEditing(false)}>Cancel</button>
         </div>
-      )}
+      </div>}
     </div>
   );
 }
@@ -151,7 +147,9 @@ function ClassCard({cls,isAdmin,onToggleConfirm,onEdit}){
           {cls.contact_line&&<a href="https://line.me/ti/p/~isorawellness" target="_blank" rel="noreferrer" style={{background:"#06C755",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none"}}>Contact on Line</a>}
         </div>
         {isAdmin&&<div style={{display:"flex",gap:8,marginTop:10}}>
-          <button style={S.btnSm(cls.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(cls.id)}>{cls.confirmed?"Unconfirm":"✓ Confirm"}</button>
+          <button style={S.btnSm(cls.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(cls)}>
+            {cls.confirmed?"Unconfirm":"✓ Confirm"}
+          </button>
           <button style={S.btnSm("transparent",C.teal)} onClick={()=>onEdit(cls)}>Edit</button>
         </div>}
       </div>}
@@ -173,15 +171,13 @@ function EventCard({e,isAdmin,onToggleConfirm,onEdit}){
           {e.subtitle&&<div style={{fontSize:"0.78rem",color:C.purple,marginTop:3}}>{e.subtitle}</div>}
           {e.price&&<div style={{fontSize:"0.85rem",fontWeight:600,color:C.text,marginTop:4}}>{e.price}</div>}
         </div>
-        {(e.description||e.contact_whatsapp||isAdmin)&&(
-          <button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px",flexShrink:0}}>{open?"▲":"▼"}</button>
-        )}
+        {(e.description||e.contact_whatsapp||isAdmin)&&<button onClick={()=>setOpen(!open)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"0 0 0 8px"}}>{open?"▲":"▼"}</button>}
       </div>
       {open&&<div style={{marginTop:12,paddingTop:12,borderTop:"1px solid rgba(155,127,194,0.15)"}}>
         {e.description&&<div style={{fontSize:"0.83rem",color:"#5a7a78",lineHeight:1.65,marginBottom:12,fontStyle:"italic"}}>{e.description}</div>}
         {e.contact_whatsapp&&<a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"inline-block",background:"#25D366",color:"#fff",borderRadius:8,padding:"7px 13px",fontSize:"0.8rem",fontWeight:600,textDecoration:"none",marginBottom:isAdmin?10:0}}>💬 WhatsApp to book</a>}
         {isAdmin&&<div style={{display:"flex",gap:8,marginTop:e.contact_whatsapp?8:0}}>
-          <button style={S.btnSm(e.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(e.id)}>{e.confirmed?"Unconfirm":"✓ Confirm"}</button>
+          <button style={S.btnSm(e.confirmed?C.amber:C.green)} onClick={()=>onToggleConfirm(e)}>{e.confirmed?"Unconfirm":"✓ Confirm"}</button>
           <button style={S.btnSm("transparent",C.teal)} onClick={()=>onEdit(e)}>Edit</button>
         </div>}
       </div>}
@@ -247,7 +243,7 @@ function PricingTab(){
         {p.badge&&<div style={{position:"absolute",top:-1,right:16,background:p.highlight?C.teal:C.tealMid,color:p.highlight?"#fff":C.text,fontSize:"0.68rem",fontWeight:700,padding:"3px 10px",borderRadius:"0 0 8px 8px",letterSpacing:"0.06em",textTransform:"uppercase"}}>{p.badge}</div>}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,marginTop:p.badge?8:0}}>
           <div>
-            <div style={{fontWeight:700,fontSize:"1rem",color:C.text}}>{p.label}</div>
+            <div style={{fontWeight:700,fontSize:"1rem"}}>{p.label}</div>
             <div style={{fontSize:"0.78rem",color:C.muted,marginTop:2}}>{p.classes}</div>
           </div>
           <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
@@ -258,24 +254,20 @@ function PricingTab(){
         <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5}}>{p.desc}</div>
       </div>
     ))}
-    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:C.teal,color:"#fff",borderRadius:12,padding:"12px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>
-      💬 Book a group class via WhatsApp
-    </a>
+    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:C.teal,color:"#fff",borderRadius:12,padding:"12px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>💬 Book a group class via WhatsApp</a>
     <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.3rem",color:C.text,marginBottom:4}}>Private Sessions</div>
     <div style={{fontSize:"0.85rem",color:C.muted,marginBottom:14}}>One-on-one · tailored to your needs</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
       {privateSessions.map((s,i)=>(
         <div key={i} style={{...S.card,marginBottom:0,textAlign:"center",padding:"18px 12px"}}>
           <div style={{fontSize:"1.6rem",marginBottom:6}}>{s.icon}</div>
-          <div style={{fontWeight:600,fontSize:"0.88rem",color:C.text,marginBottom:2}}>{s.label}</div>
+          <div style={{fontWeight:600,fontSize:"0.88rem",marginBottom:2}}>{s.label}</div>
           {s.sub&&<div style={{fontSize:"0.72rem",color:C.muted,marginBottom:4}}>{s.sub}</div>}
           <div style={{fontSize:"1.05rem",fontWeight:700,color:C.teal,marginTop:4}}>{s.price}</div>
         </div>
       ))}
     </div>
-    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:"transparent",color:C.teal,border:`1.5px solid ${C.teal}`,borderRadius:12,padding:"11px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>
-      💬 Book a private session via WhatsApp
-    </a>
+    <a href="https://wa.me/66929658549" target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",background:"transparent",color:C.teal,border:`1.5px solid ${C.teal}`,borderRadius:12,padding:"11px",fontSize:"0.9rem",fontWeight:600,textDecoration:"none",marginBottom:28}}>💬 Book a private session via WhatsApp</a>
     <div style={{...S.card,borderLeft:`3px solid ${C.purple}`,marginBottom:10}}>
       <div style={{fontWeight:600,fontSize:"0.95rem",marginBottom:4}}>🎵 Special Events</div>
       <div style={{fontSize:"0.83rem",color:C.muted,lineHeight:1.5}}>Sound healings, workshops & pop-up classes. Pricing varies — check the Schedule tab for upcoming sessions.</div>
@@ -283,12 +275,12 @@ function PricingTab(){
     <div style={{fontSize:"0.7rem",fontWeight:600,color:C.muted,textTransform:"uppercase",letterSpacing:"0.09em",margin:"20px 0 10px"}}>Also at Studios</div>
     <div style={{display:"flex",gap:10}}>
       <a href="https://aadiyogacenter.com/packageplans" target="_blank" rel="noreferrer" style={{flex:1,...S.card,textDecoration:"none",textAlign:"center",marginBottom:0,borderTop:`3px solid ${C.teal}`,padding:"16px 12px"}}>
-        <div style={{fontSize:"0.95rem",fontWeight:600,color:C.text,marginBottom:4}}>Aadi Yoga</div>
+        <div style={{fontSize:"0.95rem",fontWeight:600,marginBottom:4}}>Aadi Yoga</div>
         <div style={{fontSize:"0.75rem",color:C.muted,marginBottom:8}}>Sukhumvit Soi 10</div>
         <div style={{fontSize:"0.78rem",color:C.teal,fontWeight:600}}>View packages →</div>
       </a>
       <a href="https://www.instagram.com/p/DVbhgfYkqRQ/" target="_blank" rel="noreferrer" style={{flex:1,...S.card,textDecoration:"none",textAlign:"center",marginBottom:0,borderTop:`3px solid ${C.teal}`,padding:"16px 12px"}}>
-        <div style={{fontSize:"0.95rem",fontWeight:600,color:C.text,marginBottom:4}}>Isora Wellness</div>
+        <div style={{fontSize:"0.95rem",fontWeight:600,marginBottom:4}}>Isora Wellness</div>
         <div style={{fontSize:"0.75rem",color:C.muted,marginBottom:8}}>Sathorn Soi 12</div>
         <div style={{fontSize:"0.78rem",color:C.teal,fontWeight:600}}>View packages →</div>
       </a>
@@ -332,14 +324,14 @@ function MyClassesTab({students}){
                     {daysLeft(p.expiry)<30?`${daysLeft(p.expiry)}d left`:`Expires ${fmt(p.expiry)}`}
                   </span>
                 </div>
-                <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions&&p.sessions.length?8:0}}>
+                <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions?.length?8:0}}>
                   <div style={{width:`${((p.original-p.credits)/p.original)*100}%`,height:4,background:C.teal,borderRadius:4}}/>
                 </div>
-                {p.sessions&&p.sessions.length>0&&<details>
+                {p.sessions?.length>0&&<details>
                   <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer"}}>Redeemed ({p.sessions.length})</summary>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
-                    {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
-                      <span key={i} style={{background:"rgba(91,184,176,0.12)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s)}</span>
+                    {[...p.sessions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((s,i)=>(
+                      <span key={i} style={{background:"rgba(91,184,176,0.12)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s.date)}</span>
                     ))}
                   </div>
                 </details>}
@@ -351,11 +343,12 @@ function MyClassesTab({students}){
   </div>;
 }
 
-function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
+function StudentsPanel({students,onRefresh}){
   const [modal,setModal]=useState(null);
   const [search,setSearch]=useState("");
   const [newName,setNewName]=useState(""); const [newCr,setNewCr]=useState(10); const [newExp,setNewExp]=useState(inOneYear()); const [addMsg,setAddMsg]=useState("");
   const [showArch,setShowArch]=useState({});
+
   const getActive=st=>st.packages.filter(p=>!isExp(p.expiry)&&p.credits>0);
   const getArchived=st=>st.packages.filter(p=>isExp(p.expiry)||p.credits===0);
   const tot=st=>getActive(st).reduce((a,p)=>a+p.credits,0);
@@ -364,12 +357,30 @@ function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
   const addStudent=async()=>{
     if(!newName.trim())return;
     if(students.find(s=>s.name.toLowerCase()===newName.trim().toLowerCase())){setAddMsg("Already exists!");return;}
-    const {data:stu}=await supabase.from("students").insert({name:newName.trim()}).select().single();
-    if(stu){
-      const {data:pkg}=await supabase.from("packages").insert({student_id:stu.id,original:parseInt(newCr),credits:parseInt(newCr),expiry:newExp,sessions:[]}).select().single();
-      if(pkg) onAddPackage(stu,pkg);
-    }
+    const {data:st}=await supabase.from('students').insert({name:newName.trim()}).select().single();
+    await supabase.from('packages').insert({student_id:st.id,original:parseInt(newCr),credits:parseInt(newCr),expiry:newExp});
     setNewName("");setNewCr(10);setNewExp(inOneYear());setAddMsg("✓ Added!");setTimeout(()=>setAddMsg(""),2500);
+    onRefresh();
+  };
+
+  const deduct=async(sid,date)=>{
+    const st=students.find(s=>s.id===sid);
+    const active=st.packages.filter(p=>!isExp(p.expiry)&&p.credits>0).sort((a,b)=>new Date(a.expiry)-new Date(b.expiry));
+    if(!active.length)return;
+    const pkg=active[0];
+    await supabase.from('packages').update({credits:pkg.credits-1}).eq('id',pkg.id);
+    await supabase.from('sessions').insert({package_id:pkg.id,date});
+    onRefresh();
+  };
+
+  const addPkg=async(sid,cr,exp)=>{
+    await supabase.from('packages').insert({student_id:sid,original:parseInt(cr),credits:parseInt(cr),expiry:exp});
+    onRefresh();
+  };
+
+  const delStudent=async(sid)=>{
+    await supabase.from('students').delete().eq('id',sid);
+    onRefresh();
   };
 
   return <div style={S.page}>
@@ -404,14 +415,14 @@ function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
                 {isExp(p.expiry)?"Expired":daysLeft(p.expiry)<30?`${daysLeft(p.expiry)}d left`:`Exp. ${fmt(p.expiry)}`}
               </span>
             </div>
-            <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions&&p.sessions.length?8:0}}>
+            <div style={{height:4,background:"rgba(91,184,176,0.15)",borderRadius:4,marginBottom:p.sessions?.length?8:0}}>
               <div style={{width:`${((p.original-p.credits)/p.original)*100}%`,height:4,background:C.teal,borderRadius:4}}/>
             </div>
-            {p.sessions&&p.sessions.length>0&&<details>
+            {p.sessions?.length>0&&<details>
               <summary style={{fontSize:"0.75rem",color:C.muted,cursor:"pointer",userSelect:"none"}}>Redeemed ({p.sessions.length})</summary>
               <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
-                {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
-                  <span key={i} style={{background:"rgba(91,184,176,0.2)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s)}</span>
+                {[...p.sessions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((s,i)=>(
+                  <span key={i} style={{background:"rgba(91,184,176,0.2)",borderRadius:6,padding:"2px 8px",fontSize:"0.73rem",color:C.teal}}>{fmt(s.date)}</span>
                 ))}
               </div>
             </details>}
@@ -432,9 +443,9 @@ function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
                 <span style={{fontSize:"0.82rem",color:C.muted,fontWeight:600}}>{p.original} classes · {isExp(p.expiry)?"expired":"used up"} {fmt(p.expiry)}</span>
                 <span style={{fontSize:"0.75rem",color:C.muted}}>{p.original-p.credits} redeemed</span>
               </div>
-              {p.sessions&&p.sessions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
-                {[...p.sessions].sort((a,b)=>new Date(b)-new Date(a)).map((s,i)=>(
-                  <span key={i} style={{background:"#e8e8e8",borderRadius:5,padding:"1px 7px",fontSize:"0.7rem",color:"#999"}}>{fmt(s)}</span>
+              {p.sessions?.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:4}}>
+                {[...p.sessions].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((s,i)=>(
+                  <span key={i} style={{background:"#e8e8e8",borderRadius:5,padding:"1px 7px",fontSize:"0.7rem",color:"#999"}}>{fmt(s.date)}</span>
                 ))}
               </div>}
             </div>
@@ -447,7 +458,7 @@ function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
       <label style={S.lbl}>Class date</label>
       <input style={S.inp} type="date" value={modal.date} onChange={e=>setModal({...modal,date:e.target.value})}/>
       <div style={{display:"flex",gap:10,marginTop:8}}>
-        <button style={{...S.btnMain,margin:0}} onClick={()=>{onDeduct(modal.sid,modal.date);setModal(null);}}>Confirm</button>
+        <button style={{...S.btnMain,margin:0}} onClick={()=>{deduct(modal.sid,modal.date);setModal(null);}}>Confirm</button>
         <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
       </div>
     </Modal>}
@@ -462,26 +473,21 @@ function StudentsPanel({students,onDeduct,onAddPackage,onDeleteStudent}){
       <label style={S.lbl}>Expiry date</label>
       <input style={S.inp} type="date" value={modal.expiry} onChange={e=>setModal({...modal,expiry:e.target.value})}/>
       <div style={{display:"flex",gap:10,marginTop:8}}>
-        <button style={{...S.btnMain,margin:0}} onClick={async()=>{
-          const sid=modal.sid; const cr=parseInt(modal.credits); const exp=modal.expiry;
-          const {data:pkg}=await supabase.from("packages").insert({student_id:sid,original:cr,credits:cr,expiry:exp,sessions:[]}).select().single();
-          if(pkg) onAddPackage(null,pkg);
-          setModal(null);
-        }}>Add package</button>
+        <button style={{...S.btnMain,margin:0}} onClick={()=>{addPkg(modal.sid,modal.credits,modal.expiry);setModal(null);}}>Add package</button>
         <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
       </div>
     </Modal>}
     {modal?.type==="del"&&<Modal title="Delete student" onClose={()=>setModal(null)}>
       <div style={{fontSize:"0.9rem",marginBottom:18}}>Delete <strong>{modal.name}</strong> and all their packages?</div>
       <div style={{display:"flex",gap:10}}>
-        <button style={{...S.btnMain,margin:0,background:C.red}} onClick={()=>{onDeleteStudent(modal.sid);setModal(null);}}>Delete</button>
+        <button style={{...S.btnMain,margin:0,background:C.red}} onClick={()=>{delStudent(modal.sid);setModal(null);}}>Delete</button>
         <button style={{...S.btnGhost,margin:0}} onClick={()=>setModal(null)}>Cancel</button>
       </div>
     </Modal>}
   </div>;
 }
 
-function ClassEditModal({cls,onSave,onDelete,onClose}){
+function ClassEditModal({cls,onSave,onClose}){
   const [v,setV]=useState(cls);
   return <Modal title={v.id?"Edit class":"New class"} onClose={onClose}>
     {[["title","Title"],["time","Time (e.g. 7:00am)"],["location","Location"],["address","Address"],["note","Note"]].map(([k,l])=>(
@@ -492,7 +498,7 @@ function ClassEditModal({cls,onSave,onDelete,onClose}){
     <label style={S.lbl}>Day</label>
     <select style={S.inp} value={v.day} onChange={e=>setV({...v,day:e.target.value})}>{DAYS.map(d=><option key={d}>{d}</option>)}</select>
     <label style={S.lbl}>Type</label>
-    <select style={S.inp} value={v.type} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
+    <select style={S.inp} value={v.type||"yoga"} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
       {[["is_private","Private"],["in_package","In package"],["contact_whatsapp","WhatsApp"],["contact_line","Line"]].map(([k,l])=>(
         <label key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",cursor:"pointer"}}>
@@ -502,13 +508,12 @@ function ClassEditModal({cls,onSave,onDelete,onClose}){
     </div>
     <div style={{display:"flex",gap:8}}>
       <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
-      {v.id&&<button style={{...S.btnSm(C.red),padding:"12px"}} onClick={()=>onDelete(v.id)}>Delete</button>}
       <button style={{...S.btnGhost,margin:0}} onClick={onClose}>Cancel</button>
     </div>
   </Modal>;
 }
 
-function EventEditModal({evt,onSave,onDelete,onClose}){
+function EventEditModal({evt,onSave,onClose}){
   const [v,setV]=useState(evt);
   return <Modal title={v.id?"Edit event":"New event"} onClose={onClose}>
     {[["title","Title"],["subtitle","Tags (e.g. Breathwork · Meditation · Sound)"],["time","Time"],["price","Price"]].map(([k,l])=>(
@@ -516,22 +521,24 @@ function EventEditModal({evt,onSave,onDelete,onClose}){
     ))}
     <label style={S.lbl}>Description (optional)</label>
     <textarea style={{...S.inp,minHeight:90,resize:"vertical"}} value={v.description||""} onChange={e=>setV({...v,description:e.target.value})} placeholder="What to expect…"/>
-    <label style={S.lbl}>Date</label><input style={S.inp} type="date" value={v.date} onChange={e=>setV({...v,date:e.target.value})}/>
+    <label style={S.lbl}>Date</label><input style={S.inp} type="date" value={v.date||""} onChange={e=>setV({...v,date:e.target.value})}/>
     <label style={S.lbl}>Type</label>
-    <select style={S.inp} value={v.type} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
+    <select style={S.inp} value={v.type||"yoga"} onChange={e=>setV({...v,type:e.target.value})}><option value="yoga">Yoga</option><option value="sound">Sound Healing</option></select>
     <label style={{display:"flex",alignItems:"center",gap:5,fontSize:"0.82rem",cursor:"pointer",marginBottom:14}}>
       <input type="checkbox" checked={!!v.contact_whatsapp} onChange={e=>setV({...v,contact_whatsapp:e.target.checked})}/>WhatsApp button
     </label>
     <div style={{display:"flex",gap:8}}>
       <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
-      {v.id&&<button style={{...S.btnSm(C.red),padding:"12px"}} onClick={()=>onDelete(v.id)}>Delete</button>}
       <button style={{...S.btnGhost,margin:0}} onClick={onClose}>Cancel</button>
     </div>
   </Modal>;
 }
 
-function StudentScreen({schedule,events,students,banner,onAdmin}){
+function StudentScreen({schedule,events,students,banner}){
   const [tab,setTab]=useState("schedule");
+  const [screen,setScreen]=useState("student");
+  if(screen==="login") return <LoginScreen onSuccess={()=>setScreen("admin")} onBack={()=>setScreen("student")}/>;
+  if(screen==="admin") return <AdminApp onLogout={()=>setScreen("student")}/>;
   return <div style={S.wrap}>
     <div style={S.hdr}>
       <div style={S.logo}>✦ Yoga Classes</div>
@@ -541,7 +548,7 @@ function StudentScreen({schedule,events,students,banner,onAdmin}){
           <button style={S.navBtn(tab==="my")} onClick={()=>setTab("my")}>My Classes</button>
           <button style={S.navBtn(tab==="pricing")} onClick={()=>setTab("pricing")}>Pricing</button>
         </div>
-        <button onClick={onAdmin} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"4px 6px"}}>⚙</button>
+        <button onClick={()=>setScreen("login")} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:"0.9rem",padding:"4px 6px"}}>⚙</button>
       </div>
     </div>
     <AbsenceBanner banner={banner}/>
@@ -569,75 +576,55 @@ function LoginScreen({onSuccess,onBack}){
   </div>;
 }
 
-function AdminScreen({schedule,setSchedule,events,setEvents,students,setStudents,banner,setBanner,onLogout}){
+function AdminApp({onLogout}){
   const [tab,setTab]=useState("schedule");
+  const [schedule,setSchedule]=useState([]);
+  const [events,setEvents]=useState([]);
+  const [students,setStudents]=useState([]);
+  const [banner,setBanner]=useState(null);
   const [editCls,setEditCls]=useState(null);
   const [editEvt,setEditEvt]=useState(null);
 
-  const toggleConfirm=async(id)=>{
-    const cls=schedule.find(c=>c.id===id);
-    await supabase.from("schedule").update({confirmed:!cls.confirmed}).eq("id",id);
-    setSchedule(s=>s.map(c=>c.id===id?{...c,confirmed:!c.confirmed}:c));
+  const load=async()=>{
+    const {data:sc}=await supabase.from('schedule').select('*').order('id');
+    const {data:ev}=await supabase.from('events').select('*').order('date');
+    const {data:st}=await supabase.from('students').select('*').order('name');
+    const {data:pk}=await supabase.from('packages').select('*');
+    const {data:se}=await supabase.from('sessions').select('*');
+    const {data:bn}=await supabase.from('banner').select('*').limit(1).single();
+    const enriched=(st||[]).map(s=>({...s,packages:(pk||[]).filter(p=>p.student_id===s.id).map(p=>({...p,sessions:(se||[]).filter(x=>x.package_id===p.id)}))}));
+    setSchedule(sc||[]);setEvents(ev||[]);setStudents(enriched);setBanner(bn);
   };
-  const toggleEventConfirm=async(id)=>{
-    const ev=events.find(e=>e.id===id);
-    await supabase.from("events").update({confirmed:!ev.confirmed}).eq("id",id);
-    setEvents(e=>e.map(ev=>ev.id===id?{...ev,confirmed:!ev.confirmed}:ev));
+
+  useEffect(()=>{load();},[]);
+
+  const toggleConfirm=async(cls)=>{
+    await supabase.from('schedule').update({confirmed:!cls.confirmed}).eq('id',cls.id);
+    load();
+  };
+  const toggleEventConfirm=async(e)=>{
+    await supabase.from('events').update({confirmed:!e.confirmed}).eq('id',e.id);
+    load();
   };
   const saveClass=async(cls)=>{
-    const row={day:cls.day,time:cls.time,title:cls.title,location:cls.location,address:cls.address,type:cls.type,is_private:cls.is_private,in_package:cls.in_package,confirmed:cls.confirmed||false,contact_whatsapp:cls.contact_whatsapp,contact_line:cls.contact_line,note:cls.note||"",description:cls.description||""};
-    if(cls.id&&schedule.find(c=>c.id===cls.id)){
-      await supabase.from("schedule").update(row).eq("id",cls.id);
-      setSchedule(s=>s.map(c=>c.id===cls.id?{...cls}:c));
-    } else {
-      const {data}=await supabase.from("schedule").insert(row).select().single();
-      if(data) setSchedule(s=>[...s,data]);
-    }
-    setEditCls(null);
+    const {id,...data}={...cls,is_private:cls.is_private||false,in_package:cls.in_package||false,contact_whatsapp:cls.contact_whatsapp||false,contact_line:cls.contact_line||false};
+    if(id) await supabase.from('schedule').update(data).eq('id',id);
+    else await supabase.from('schedule').insert(data);
+    setEditCls(null);load();
   };
   const delClass=async(id)=>{
-    await supabase.from("schedule").delete().eq("id",id);
-    setSchedule(s=>s.filter(c=>c.id!==id));
-    setEditCls(null);
+    await supabase.from('schedule').delete().eq('id',id);
+    setEditCls(null);load();
   };
   const saveEvent=async(evt)=>{
-    const row={date:evt.date,time:evt.time,title:evt.title,subtitle:evt.subtitle||"",price:evt.price||"",type:evt.type,confirmed:evt.confirmed||false,contact_whatsapp:evt.contact_whatsapp,note:evt.note||"",description:evt.description||""};
-    if(evt.id&&events.find(e=>e.id===evt.id)){
-      await supabase.from("events").update(row).eq("id",evt.id);
-      setEvents(e=>e.map(ev=>ev.id===evt.id?{...evt}:ev));
-    } else {
-      const {data}=await supabase.from("events").insert(row).select().single();
-      if(data) setEvents(e=>[...e,data]);
-    }
-    setEditEvt(null);
+    const {id,...data}=evt;
+    if(id) await supabase.from('events').update(data).eq('id',id);
+    else await supabase.from('events').insert(data);
+    setEditEvt(null);load();
   };
   const delEvent=async(id)=>{
-    await supabase.from("events").delete().eq("id",id);
-    setEvents(e=>e.filter(ev=>ev.id!==id));
-    setEditEvt(null);
-  };
-
-  const deduct=async(sid,date)=>{
-    const st=students.find(s=>s.id===sid);
-    const active=[...st.packages].filter(p=>!isExp(p.expiry)&&p.credits>0).sort((x,y)=>new Date(x.expiry)-new Date(y.expiry));
-    if(!active.length)return;
-    const pkg=active[0];
-    const newSessions=[...(pkg.sessions||[]),date];
-    await supabase.from("packages").update({credits:pkg.credits-1,sessions:newSessions}).eq("id",pkg.id);
-    setStudents(prev=>prev.map(s=>s.id!==sid?s:{...s,packages:s.packages.map(p=>p.id===pkg.id?{...p,credits:p.credits-1,sessions:newSessions}:p)}));
-  };
-
-  const addPackage=async(newStudent,pkg)=>{
-    if(newStudent){
-      setStudents(prev=>[...prev,{...newStudent,packages:[pkg]}]);
-    } else {
-      setStudents(prev=>prev.map(s=>s.id===pkg.student_id?{...s,packages:[...s.packages,pkg]}:s));
-    }
-  };
-
-  const deleteStudent=async(sid)=>{
-    await supabase.from("students").delete().eq("id",sid);
-    setStudents(prev=>prev.filter(s=>s.id!==sid));
+    await supabase.from('events').delete().eq('id',id);
+    setEditEvt(null);load();
   };
 
   return <div style={S.wrap}>
@@ -652,7 +639,7 @@ function AdminScreen({schedule,setSchedule,events,setEvents,students,setStudents
       </div>
     </div>
     {tab==="schedule"&&<div style={S.page}>
-      <BannerEditor banner={banner} onUpdate={setBanner}/>
+      {banner&&<BannerEditor banner={banner} onUpdate={load}/>}
       <ScheduleView
         schedule={schedule} events={events} isAdmin={true}
         onToggleConfirm={toggleConfirm} onEdit={setEditCls}
@@ -661,42 +648,27 @@ function AdminScreen({schedule,setSchedule,events,setEvents,students,setStudents
         onAddEvent={()=>setEditEvt({date:todayStr(),time:"",title:"",subtitle:"",price:"",type:"yoga",confirmed:false,contact_whatsapp:true,note:"",description:""})}
       />
     </div>}
-    {tab==="students"&&<StudentsPanel students={students} onDeduct={deduct} onAddPackage={addPackage} onDeleteStudent={deleteStudent}/>}
-    {editCls&&<ClassEditModal cls={editCls} onSave={saveClass} onDelete={delClass} onClose={()=>setEditCls(null)}/>}
-    {editEvt&&<EventEditModal evt={editEvt} onSave={saveEvent} onDelete={delEvent} onClose={()=>setEditEvt(null)}/>}
+    {tab==="students"&&<StudentsPanel students={students} onRefresh={load}/>}
+    {editCls&&<ClassEditModal cls={editCls} onSave={saveClass} onClose={()=>setEditCls(null)}/>}
+    {editEvt&&<EventEditModal evt={editEvt} onSave={saveEvent} onClose={()=>setEditEvt(null)}/>}
   </div>;
 }
 
 export default function Root(){
-  const [screen,setScreen]=useState("student");
-  const [schedule,setSchedule]=useState([]);
-  const [events,setEvents]=useState([]);
-  const [students,setStudents]=useState([]);
-  const [banner,setBanner]=useState(null);
-  const [loading,setLoading]=useState(true);
+  const [data,setData]=useState({schedule:[],events:[],students:[],banner:null});
 
-  useEffect(()=>{
-    const load=async()=>{
-      const [sched,evts,stus,pkgs,ban]=await Promise.all([
-        supabase.from("schedule").select("*"),
-        supabase.from("events").select("*"),
-        supabase.from("students").select("*"),
-        supabase.from("packages").select("*"),
-        supabase.from("banner").select("*").eq("id",1).single(),
-      ]);
-      const studentsWithPkgs=(stus.data||[]).map(s=>({...s,packages:(pkgs.data||[]).filter(p=>p.student_id===s.id)}));
-      setSchedule(sched.data||[]);
-      setEvents(evts.data||[]);
-      setStudents(studentsWithPkgs);
-      setBanner(ban.data||{active:false,message:"",date_from:null,date_to:null,resume_date:null});
-      setLoading(false);
-    };
-    load();
-  },[]);
+  const load=async()=>{
+    const {data:sc}=await supabase.from('schedule').select('*').order('id');
+    const {data:ev}=await supabase.from('events').select('*').order('date');
+    const {data:st}=await supabase.from('students').select('*').order('name');
+    const {data:pk}=await supabase.from('packages').select('*');
+    const {data:se}=await supabase.from('sessions').select('*');
+    const {data:bn}=await supabase.from('banner').select('*').limit(1).single();
+    const enriched=(st||[]).map(s=>({...s,packages:(pk||[]).filter(p=>p.student_id===s.id).map(p=>({...p,sessions:(se||[]).filter(x=>x.package_id===p.id)}))}));
+    setData({schedule:sc||[],events:ev||[],students:enriched,banner:bn});
+  };
 
-  if(loading) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"'DM Sans',sans-serif",color:C.teal,fontSize:"1.1rem"}}>Loading…</div>;
+  useEffect(()=>{load();},[]);
 
-  if(screen==="student") return <StudentScreen schedule={schedule} events={events} students={students} banner={banner} onAdmin={()=>setScreen("login")}/>;
-  if(screen==="login") return <LoginScreen onSuccess={()=>setScreen("admin")} onBack={()=>setScreen("student")}/>;
-  return <AdminScreen schedule={schedule} setSchedule={setSchedule} events={events} setEvents={setEvents} students={students} setStudents={setStudents} banner={banner} setBanner={setBanner} onLogout={()=>setScreen("student")}/>;
+  return <StudentScreen {...data}/>;
 }
