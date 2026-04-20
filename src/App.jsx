@@ -535,7 +535,7 @@ function StudentsPanel({students,onRefresh}){
   </div>;
 }
 
-function ClassEditModal({cls,onSave,onClose}){
+function ClassEditModal({cls,onSave,onDelete,onClose}){
   const [v,setV]=useState(cls);
   return <Modal title={v.id?"Edit class":"New class"} onClose={onClose}>
     {[["title","Title"],["time","Time (e.g. 7:00am)"],["location","Location"],["address","Address"],["note","Note"]].map(([k,l])=>(
@@ -556,12 +556,13 @@ function ClassEditModal({cls,onSave,onClose}){
     </div>
     <div style={{display:"flex",gap:8}}>
       <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
+      {v.id&&<button style={{...S.btnSm(C.red),padding:"12px"}} onClick={()=>onDelete(v.id)}>Delete</button>}
       <button style={{...S.btnGhost,margin:0}} onClick={onClose}>Cancel</button>
     </div>
   </Modal>;
 }
 
-function EventEditModal({evt,onSave,onClose}){
+function EventEditModal({evt,onSave,onDelete,onClose}){
   const [v,setV]=useState(evt);
   return <Modal title={v.id?"Edit event":"New event"} onClose={onClose}>
     {[["title","Title"],["subtitle","Tags (e.g. Breathwork · Meditation · Sound)"],["time","Time"],["price","Price"]].map(([k,l])=>(
@@ -577,6 +578,7 @@ function EventEditModal({evt,onSave,onClose}){
     </label>
     <div style={{display:"flex",gap:8}}>
       <button style={{...S.btnMain,margin:0}} onClick={()=>onSave(v)}>Save</button>
+      {v.id&&<button style={{...S.btnSm(C.red),padding:"12px"}} onClick={()=>onDelete(v.id)}>Delete</button>}
       <button style={{...S.btnGhost,margin:0}} onClick={onClose}>Cancel</button>
     </div>
   </Modal>;
@@ -697,8 +699,8 @@ function AdminApp({onLogout}){
       />
     </div>}
     {tab==="students"&&<StudentsPanel students={students} onRefresh={load}/>}
-    {editCls&&<ClassEditModal cls={editCls} onSave={saveClass} onClose={()=>setEditCls(null)}/>}
-    {editEvt&&<EventEditModal evt={editEvt} onSave={saveEvent} onClose={()=>setEditEvt(null)}/>}
+    {editCls&&<ClassEditModal cls={editCls} onSave={saveClass} onDelete={delClass} onClose={()=>setEditCls(null)}/>}
+    {editEvt&&<EventEditModal evt={editEvt} onSave={saveEvent} onDelete={delEvent} onClose={()=>setEditEvt(null)}/>}
   </div>;
 }
 
